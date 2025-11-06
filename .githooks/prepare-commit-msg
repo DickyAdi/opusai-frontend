@@ -1,0 +1,8 @@
+#!/bin/sh
+# Only apply the template for new commit messages, not amend or merge
+if [ -z "$2" ]; then
+  template_file=".commit_template.txt"
+  if [ -f "$template_file" ]; then
+    cat "$template_file" > "$1"
+  fi
+fi

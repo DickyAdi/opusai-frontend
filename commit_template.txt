@@ -1,0 +1,13 @@
+[]() Short desc here. (Write short desc about what you are doing in this commit)
+Long description here, explain your commit in a bulleted list
+
+* Fix bla bla:
+    - Remove file 1
+    - Remove code blabla
+
+# example
+# [dev, ref](backend/api) Add starting point in api dir
+
+# * Add starting point in api:
+#    - create main.py
+#    - import bla bla
