@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile
 from typing import Optional
 
-router = APIRouter()
+router = APIRouter(prefix='/ai')
 
 
 @router.post('/chat')
