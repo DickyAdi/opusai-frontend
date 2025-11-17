@@ -6,3 +6,4 @@ pymilvus
 pdfplumber
 langchain-text-splitter
 python-docx
+pydantic
