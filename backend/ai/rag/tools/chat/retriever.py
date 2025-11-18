@@ -2,6 +2,8 @@ import os
 from dotenv import load_dotenv
 from uuid import uuid4
 from typing import Optional
+from pydantic import Field
+from typing import Annotated
 
 from qdrant_client import QdrantClient, models
 from ai.rag.tools.embeddings.embedder import Embedder
@@ -17,7 +19,12 @@ load_dotenv()
 
 
 # ========= GLOBAL RAG (MILVUS) ========= #
-def retrieve_context_milvus(query: str, top_k: int = 3):
+def retrieve_context_milvus(query: Annotated[str, Field(description="User question or user query")], top_k: Annotated[int, Field(description="Number of context that will be retrieved")] = 3):
+    """A function/tool to retrieve additional context from a vector database. The result of this function may or may not be True. If you think the results is not relevant to the user question, you could ignore and doesnt include a reference from the returned context. However, if you think the additional context returned by this context is relevant to the user query, you are encouraged to refer to the returned context.
+    Example:
+    User query: What happen in COVID-19?
+    response: retrieve_context_milvus(query="What happen in COVID-19")
+    """
     collection = init_collection()
     embedder = Embedder()
 
