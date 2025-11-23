@@ -23,7 +23,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+          (function () {
+            try {
+              var darkMode = localStorage.getItem('dark-mode-storage');
+              if (darkMode) {
+                var state = JSON.parse(darkMode);
+                if (state.state && state.state.isDark) {
+                  document.documentElement.classList.add('dark');
+                }
+              }
+            } catch (e) {}
+          })();
+          `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
