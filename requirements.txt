@@ -4,6 +4,6 @@ openai
 qdrant-client
 pymilvus
 pdfplumber
-langchain-text-splitter
+langchain-text-splitters
 python-docx
 pydantic
