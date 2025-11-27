@@ -1,27 +1,16 @@
-import { ChatConversationType } from "@/lib/type/conversation";
-import ChatConversation from "../chat_conversation";
+import {ChatConversation} from "../chat_conversation";
 import { SidebarMenu } from "@/components/ui/sidebar";
-
-const dummy_conversation: ChatConversationType[] = [
-  {
-    id: "dummy1",
-    title: "Dummy title for conversation 1",
-  },
-  {
-    id: "dummy2",
-    title: "Dummy title for conversation 2",
-  },
-  {
-    id: "dummy3",
-    title: "Dummy title for conversation 3",
-  },
-];
+import useConversation from "@/hooks/useConversation";
+import { conversationStore } from "@/lib/store/conversation_store";
+import { useRouter } from "next/router";
 
 export default function ChatSidebarContent() {
+  const {conversations} = useConversation()
+
   return (
     <SidebarMenu>
-      {dummy_conversation.map((e) => (
-        <ChatConversation key={e.id} id={e.id} title={e.title} />
+      {conversations.map((e) => (
+        <ChatConversation key={e.id} id={e.id} title={e.title} createdAt={e.createdAt} />
       ))}
     </SidebarMenu>
   );

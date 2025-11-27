@@ -1,4 +1,6 @@
-"use client";
+'use client'
+
+import ChatInputArea from "@/components/chat/layout/chat_input_area";
 
 export default function ChatPage() {
   return (
@@ -8,6 +10,7 @@ export default function ChatPage() {
           <h1 className="text-4xl font-extrabold">Ask me a question</h1>
         </div>
       </div>
+      <ChatInputArea />
     </>
   );
 }

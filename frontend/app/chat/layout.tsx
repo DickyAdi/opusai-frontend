@@ -15,7 +15,7 @@ import DarkModeToggle from "@/components/utils/darkmode-toggle";
 import ChatSidebarFooter from "@/components/chat/layout/sidebar_footer";
 import ChatSidebarHeader from "@/components/chat/layout/sidebar_header";
 import ChatSidebarContent from "@/components/chat/layout/sidebar_content";
-import ChatInputArea from "@/components/chat/layout/chat_input_area";
+import { ChatAIThinking } from "@/components/chat/loading";
 
 export default function ChatLayout({ children }: { children: ReactNode }) {
   return (
@@ -35,10 +35,10 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
         <div className="flex flex-col h-screen overflow-visible">
           <header className="flex items-center gap-2 border-b p-2">
             <SidebarTrigger size="lg" />
-            <DarkModeToggle className="justify-self-end" />
+            <DarkModeToggle className="ml-auto" />
+            {/* <ChatAIThinking /> */}
           </header>
           {children}
-          <ChatInputArea />
         </div>
       </SidebarInset>
     </SidebarProvider>

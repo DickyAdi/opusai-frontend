@@ -1,14 +1,19 @@
-import ChatMessageType from "@/lib/type/chat_message";
+import { memo, useEffect, useMemo } from "react";
+import { ChatAIThinking } from "./loading";
+import { useIsThinking, useStreamingMessageId } from "@/hooks/useChat";
 
-export default function ChatMessage({ id, role, message }: ChatMessageType) {
+
+const ChatMessage = memo(function ChatMessage({id, role, message} : {id:string, role:'assistant' | 'user', message:string}) {
+  console.log(`im rendered ${id}`)
+
   return (
     <>
       {role === "assistant" ? (
-        <div className="flex justify-start">
-          <div className="p-3 max-w-[80%] rounded-xl" id={id}>
-            {message}
+          <div className="flex flex-col justify-start">
+            <div className="p-3 max-w-[80%] rounded-xl" id={id}>
+              {message}
+            </div>
           </div>
-        </div>
       ) : (
         <div className="flex justify-end">
           <div
@@ -20,5 +25,7 @@ export default function ChatMessage({ id, role, message }: ChatMessageType) {
         </div>
       )}
     </>
-  );
-}
+  )
+})
+
+export {ChatMessage}

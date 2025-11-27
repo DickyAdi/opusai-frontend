@@ -4,18 +4,19 @@ import { ChatConversationType } from "../type/conversation";
 interface ConversationStoreState {
   conversations: ChatConversationType[];
   currentConversationId: string | null;
-  createConversation: (title: string) => void;
-  switchConversation: (id: string) => void;
+  createConversation: (title: string, convId?: string) => void;
+  switchConversation: (id: string | null) => void;
 }
 
 export const conversationStore = create<ConversationStoreState>((set) => ({
   conversations: [],
   currentConversationId: null,
-  createConversation: (title: string) => {
+  createConversation: (title: string, convId?:string) => {
     set((state) => {
       const today = new Date();
+      const id = crypto.randomUUID()
       const new_conv: ChatConversationType = {
-        id: crypto.randomUUID(),
+        id: convId ||id,
         title: title,
         createdAt: today.toISOString(),
       };
@@ -25,5 +26,5 @@ export const conversationStore = create<ConversationStoreState>((set) => ({
       };
     });
   },
-  switchConversation: (id: string) => set({ currentConversationId: id }),
+  switchConversation: (id: string | null) => set({ currentConversationId: id }),
 }));

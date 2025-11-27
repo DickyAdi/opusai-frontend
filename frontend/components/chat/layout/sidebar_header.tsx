@@ -1,8 +1,16 @@
 import { SidebarHeader } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import useChat from "@/hooks/useChat";
+import useConversation from "@/hooks/useConversation";
+import {redirect, RedirectType} from "next/navigation";
 import Link from "next/link";
 
 export default function ChatSidebarHeader() {
+  const {switchConversation} = useConversation()
+  const newChatHandler = () => {
+   switchConversation(null)
+  }
+
   return (
     <SidebarHeader>
       <ul className="flex flex-col gap-2">
@@ -17,7 +25,7 @@ export default function ChatSidebarHeader() {
           </div>
         </li>
         <li>
-          <Button className="w-full justify-start p-0 text-md" variant="ghost">
+          <Button className="w-full justify-start p-0 text-md" variant="ghost" onClick={newChatHandler}>
             <Link href={`/chat`} className="w-full text-left" prefetch={false}>
               New chat
             </Link>
