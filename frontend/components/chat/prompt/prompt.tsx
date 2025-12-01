@@ -77,6 +77,12 @@ export function CustomPromptDialog({open, onOpenChange, onSave, onSaveSetTitle}:
     onSaveSetTitle("Custom Prompt")
     onOpenChange(false)
   }
+
+  const handle_clear = () => {
+    onSave("")
+    onSaveSetTitle("")
+    onOpenChange(false)
+  }
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -96,6 +102,7 @@ export function CustomPromptDialog({open, onOpenChange, onSave, onSaveSetTitle}:
             />
           </InputGroup>
           <DialogFooter>
+            <Button variant="destructive" onClick={handle_clear}>Clear</Button>
             <DialogClose asChild>
               <Button>Cancel</Button>
             </DialogClose>
