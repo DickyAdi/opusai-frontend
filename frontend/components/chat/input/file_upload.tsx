@@ -1,5 +1,6 @@
 import { InputGroupButton } from "@/components/ui/input-group"
 import { useAppendFile, useGetFiles, useIsThinking } from "@/hooks/useChat"
+import { useAppendError } from "@/hooks/useError"
 import { MAX_FILE_UPLOAD_COUNT } from "@/lib/config/constants"
 import { chat_file_schema } from "@/lib/validator/chat/file"
 import { FileIcon } from "lucide-react"
@@ -13,6 +14,7 @@ const ChatFileUpload = memo(
     const fileClickRef = useRef<HTMLInputElement>(null)
     const files = useGetFiles()
     const appendFile = useAppendFile()
+    const appendError = useAppendError()
 
     const handle_file_click = () => {
       fileClickRef.current?.click()
@@ -25,7 +27,7 @@ const ChatFileUpload = memo(
       }
 
       if (files.length >= MAX_FILE_UPLOAD_COUNT) {
-        alert('Can only upload 3 files')
+        appendError("Can only upload 3 files")
         e.target.value = ''
         return
       }
@@ -33,7 +35,7 @@ const ChatFileUpload = memo(
       const validated = chat_file_schema.safeParse(file)
 
       if (!validated.success) {
-        alert('File is not validated!')
+        appendError("Files invalid, only receives pdf, doc, docx, txt, and csv files.")
         return
       } else {
         appendFile(file)
@@ -51,7 +53,7 @@ const ChatFileUpload = memo(
           onClick={handle_file_click}
           type="button"
         >
-          <FileIcon />  <input ref={fileClickRef} type="file" className="sr-only" accept="application/*" onChange={handle_file_on_change} />
+          <FileIcon />  <input ref={fileClickRef} type="file" className="sr-only" accept="application/pdf, text/plain, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, text/csv, application/csv" onChange={handle_file_on_change} />
         </InputGroupButton>
       </form>
     )

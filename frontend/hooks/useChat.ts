@@ -1,14 +1,20 @@
 import * as React from "react";
-import ChatMessageType from "@/lib/type/chat_message";
+import ChatMessageType, { ChatCompletionData, ChatStartData } from "@/lib/type/chat_message";
 import { messageStore } from "@/lib/store/message_store";
-import { useConversationId, useCreateConversation, useSwitchConversation } from "./useConversation";
+import { useConversationId, useCreateConversation, useFetchConversations, useSwitchConversation } from "./useConversation";
 import { fetchDummyModels } from "@/lib/api/models";
+import { fetchConversationMessages, fetchConversationTitle } from "@/lib/api/conversations";
+import { fetchChat } from "@/lib/api/chat";
+import { useAppendError } from "./useError";
+import { useRouter } from "next/navigation";
 
 
 interface useChatHook {
   messages: ChatMessageType[];
   shouldResponse: boolean
-  sendMessage: (message:string) => string | null;
+  // sendMessage: (message:string) => string | null;
+  // sendMessage: (message:string) => Promise<string | null>;
+  sendMessage: (message:string) => Promise<void>;
   getMessageForConv: ChatMessageType[];
   setShouldResponse: (e:boolean) => void;
 }
@@ -58,37 +64,77 @@ export function useSetShouldResponse() {
 }
 
 export function useSetPrompt() {
-  return messageStore(state => state.setPrompt)
+  return messageStore(state => state.setPrompt_id)
 }
 
 export function useGetPrompt() {
-  return messageStore(state => state.prompt)
+  return messageStore(state => state.prompt_id)
 }
 
 export function useFetchModels() {
   const availableModels = useAvailableModels()
   const loadModels = messageStore(state => state.loadModels)
-  const hasLoaded = React.useRef(false)
+  // const hasLoaded = React.useRef(false)
+  const [hasFetched, setHasFetched] = React.useState(false)
+  const appendError = useAppendError()
 
   React.useEffect(() => {
-    if (availableModels.length === 0 && !hasLoaded.current) {
-      hasLoaded.current = true
-      loadModels()
+    const getModels = async () => {
+      // if (availableModels.length === 0 && !hasFetched) {
+      if (!hasFetched) {
+        // setHasFetched(true)
+        try {
+          await loadModels()
+        } catch(error) {
+          const errMsg = error instanceof Error ? error.message : "Cannot load models from server, please contact us."
+          setHasFetched(false)
+          appendError(errMsg)
+        } finally {
+          setHasFetched(true)
+        }
+      }
     }
-  }, [loadModels, availableModels.length])
+    getModels()
+  }, [loadModels, availableModels.length, appendError, hasFetched])
 }
 
-export function useGetMessageForConv() {
-  const messages = useMessages()
-  const currentConversationId = useConversationId()
-  const getMessageForConv = React.useMemo(() => {
-    if (!currentConversationId) {
-      return []
-    }
-    return messages.filter(msg => msg.conversationId === currentConversationId)
-  }, [messages, currentConversationId])
+export function useClearMessages() {
+  return messageStore(state => state.clearMessages)
+}
 
-  return getMessageForConv
+export function useConversationMessages() {
+  const currentConversationId = useConversationId()
+  const clearMessages = useClearMessages()
+  const getConversationMessages = messageStore(state => state.getConversationMessages)
+  const isStreaming = useIsStreaming()
+
+  React.useEffect(() => {
+    if (currentConversationId && !isStreaming) {
+      getConversationMessages(currentConversationId)
+    } else if (currentConversationId === null && !isStreaming) {
+      clearMessages()
+    }
+  }, [currentConversationId, getConversationMessages, isStreaming, clearMessages])
+}
+
+// function below is commented because of integration, later if want to work with UI use this function
+// export function useGetMessageForConv() {
+//   const messages = useMessages()
+//   const currentConversationId = useConversationId()
+//   const getMessageForConv = React.useMemo(() => {
+//     if (!currentConversationId) {
+//       return []
+//     }
+//     // return messages.filter(msg => msg.conversationId === currentConversationId)
+//     return messages
+//   }, [messages, currentConversationId])
+
+//   return getMessageForConv
+// }
+
+// Integrated to backend
+export function useGetMessageForConv() {
+  return messageStore(state => state.messages)
 }
 
 export function useAvailableModels() {
@@ -107,6 +153,147 @@ export function useIsLoadingModels() {
   return messageStore(state => state.isLoadingModels)
 }
 
+export function useUpdateUserMessageId() {
+  return messageStore(state => state.updateUserMessageId)
+}
+
+export function useIsProcessing() {
+  return messageStore(state => state.isProcessing)
+}
+
+export function useClearFiles() {
+  return messageStore(state => state.clearFiles)
+}
+
+export function useChatAPI() {
+  const setIsThinking = useSetIsThinking()
+  const selectedModel = useSelectedModel()
+  const prompt_id = useGetPrompt()
+  const files = useGetFiles()
+  const parameter = useParameterSettings()
+  const uploadFiles = useUploadFiles()
+  const clearFiles = useClearFiles()
+  const appendError = useAppendError()
+  const setMessageScratchpad = useSetMessageScratchpad()
+  const setIsStreaming = useSetIsStreaming()
+  const chunkQueueRef = React.useRef<string[]>([]);
+  const processingRef = React.useRef(false);
+  const processChunkQueue = React.useCallback(() => {
+    if (processingRef.current || chunkQueueRef.current.length === 0) {
+      return;
+    }
+
+    processingRef.current = true;
+
+    const processNext = () => {
+      if (chunkQueueRef.current.length === 0) {
+        processingRef.current = false;
+        return;
+      }
+
+      const chunk = chunkQueueRef.current.shift()!;
+      setMessageScratchpad((prev) => prev + chunk);
+
+      setTimeout(processNext, 30); // 30ms between chunks
+    };
+
+    processNext();
+  }, [setMessageScratchpad]);
+  
+  const sendChatMessage = React.useCallback(
+    async (conversation_id:string | null, message:string, onStart?:(data:ChatStartData) => void, onComplete?:(data:ChatCompletionData) => void) => {
+      try{
+        let filesData = null
+        
+        if (files && files.length > 0) {
+          filesData = await uploadFiles(files)
+          if (!filesData) {
+            appendError('Failed to upload files')
+            return
+          }
+          console.log('Checking if files exists: ', files.length)
+          clearFiles()
+        }
+        
+        console.log('Logging the conversation id: ', conversation_id)
+        chunkQueueRef.current = []
+        const params = {
+          conversation_id: conversation_id,
+          query: message,
+          model: selectedModel,
+          file:files.length > 0? true : false,
+          file_paths:filesData? filesData.files.map(data => data.file_path): [],
+          VDB:false,
+          system_prompt_id: prompt_id,
+          temperature: parameter.temperature,
+          stream:true,
+          task_type:'chat' as const,
+          db_connect:false,
+          onStart: (data:ChatStartData) => {
+            setIsStreaming(true)
+            // setIsThinking(false)
+            if (onStart) {
+              onStart(data)
+            }
+
+          },
+          onChunk: (chunk:string) => {
+            
+            chunkQueueRef.current.push(chunk);
+            processChunkQueue();
+          },
+          onComplete: (data:ChatCompletionData) => {
+            const checkQueue = setInterval(() => {
+              if (chunkQueueRef.current.length === 0 && !processingRef.current) {
+                clearInterval(checkQueue);
+                setIsStreaming(false);
+                setIsThinking(false);
+                if (onComplete) {
+                  onComplete(data);
+                }
+              }
+            }, 50);
+            // if (chunkQueueRef.current.length === 0 && !processingRef.current) {
+            //   setIsStreaming(false)
+            //   // setIsThinking(false)
+            //   if (onComplete) {
+            //     onComplete(data)
+            //   }
+            // }
+          },
+          onError: (error:string) => {
+            setIsStreaming(false)
+            setIsThinking(false)
+            chunkQueueRef.current = [];
+            processingRef.current = false;
+            messageStore.getState().setMessageScratchpad('')
+
+            // throw new Error(error !== null || undefined ? error : "API Error")
+            appendError(error || "Stream error")
+          }
+        }
+        setIsThinking(true)
+        setIsStreaming(true)
+        setMessageScratchpad('')
+        const response = await fetchChat(params)
+        return response
+      } catch(error){
+        const errMsg = error instanceof Error ? error.message : "Failed to send chat request"
+        setIsThinking(false)
+        chunkQueueRef.current = []; // ✅ Clear queue on error
+        processingRef.current = false;
+        appendError(errMsg)
+      } finally {
+        setIsThinking(false)
+      }
+    }, [selectedModel, prompt_id, files, setIsThinking, clearFiles, uploadFiles, appendError, setMessageScratchpad, setIsStreaming]
+  )
+  return {sendChatMessage}
+}
+
+export function useUploadFiles() {
+  return messageStore(state => state.uploadFiles)
+}
 
 export function useSendMessage() {
   const currentConversationId = useConversationId()
@@ -114,40 +301,120 @@ export function useSendMessage() {
   const switchConversation = useSwitchConversation()
   const setShouldResponse = useSetShouldResponse()
   const appendMessage = useAppendMessage()
-
+  const setMessageScratchpad = useSetMessageScratchpad()
+  const messageScratchpad = useMessageScratchpad()
+  const {sendChatMessage} = useChatAPI()
+  const appendError = useAppendError()
+  const updateUserMessageId = useUpdateUserMessageId()
+  // const delay = (ms:number) => new Promise(resolve => setTimeout(resolve, ms))
+  const isProcessing = messageStore(state => state.isProcessing)
+  const setIsProcessing = messageStore(state => state.setIsProcessing)
+  const router = useRouter()
+  const setIsStreaming = useSetIsStreaming()
+  
   const sendMessage = React.useCallback(
-    (message:string) => {
-      let activeConvId = currentConversationId
+    async (message:string, stream:boolean=true) => {
       
       if (!message) {
-        console.log('ERROR, cannot send a message with empty message.')
-        return null
+        appendError("Cannot send a message with empty message.")
+        return
       }
-  
-      if (!activeConvId) {
-        const convId = crypto.randomUUID()
-        createConversation(`dummy ${Math.random()}`, convId)
-        activeConvId = convId
-        switchConversation(activeConvId)
-      }
-  
-      if (!activeConvId) {
-        console.log('ERROR, conv id is null')
-        return null
-      }
-  
-      appendMessage({
-        conversationId:activeConvId,
-        role:'user',
-        message: message
-      })
-      setShouldResponse(true)
-      return activeConvId
-    }, [currentConversationId, createConversation, switchConversation, appendMessage, setShouldResponse]
-  )
 
+      if (isProcessing) {
+        console.log('Checking is processing: ', isProcessing)
+        return
+      }
+      
+      setIsProcessing(true)
+      let activeConvId = currentConversationId
+
+      try {
+        const tempUserMsgId = crypto.randomUUID()
+        appendMessage({
+          conversationId: activeConvId || 'temp',
+          role: 'user',
+          message,
+          id:tempUserMsgId
+        })
+
+        const result = await sendChatMessage(activeConvId, message,
+          async (data:ChatStartData) => {
+            updateUserMessageId(tempUserMsgId, data.input_id)
+            if (!activeConvId && data.conversation_id) {
+              createConversation(data.title, data.conversation_id)
+              switchConversation(data.conversation_id)
+              router.replace(`/chat/${data.conversation_id}`)
+              activeConvId = data.conversation_id
+            }
+          },
+          async (data:ChatCompletionData) => {
+            // updateUserMessageId(tempUserMsgId, data.input_id)
+            // if (!activeConvId && data.conversation_id) {
+            //   const conversationTitle = await fetchConversationTitle(data.conversation_id)
+            //   createConversation(conversationTitle || message.slice(0,50), data.conversation_id)
+            //   switchConversation(data.conversation_id)
+            //   activeConvId = data.conversation_id
+            //   router.replace(`/chat/${data.conversation_id}`)
+            // }
+            const completeMessage = messageStore.getState().messageScratchpad
+            appendMessage({
+              conversationId:data.conversation_id,
+              role:'assistant',
+              id:data.message_id,
+              message:completeMessage
+            })
+            messageStore.getState().setMessageScratchpad('')
+          }
+        )
+        if (!result && !stream) {
+          throw new Error('Failed to send chat')
+        }
+        // updateUserMessageId(tempUserMsgId, result.input_id)
+        // const conversationTitle = await fetchConversationTitle(result.conversation_id)
+
+        // if (!activeConvId && result.conversation_id) {
+        //   createConversation(conversationTitle || message.slice(0, 50), result.conversation_id)
+        //   switchConversation(result.conversation_id)
+        //   activeConvId = result.conversation_id
+        //   router.replace(`/chat/${result.conversation_id}`)
+        // }
+
+        // setIsStreaming(true)
+        // const words = result.response.content.split(' ')
+        // let accumulated:string = ''
+        // for (let i=0; i < words.length; i++) {
+        //   accumulated += (i > 0 ? ' ' : '') + words[i]
+        //   setMessageScratchpad(accumulated)
+
+        //   await delay(20+Math.random() * 60)
+        // }
+        // setIsStreaming(false)
+
+        // if (result.response.content) {
+        //   setMessageScratchpad('')
+        //   appendMessage({
+        //     conversationId:activeConvId!,
+        //     role:'assistant',
+        //     message:result.response.content,
+        //     id:result.response.response_id
+        //   })
+        // }
+
+        // return activeConvId
+      } catch(error) {
+        const errMsg = error instanceof Error ? error.message : "Failed to send a message, please try again later"
+        appendError(errMsg)
+        setIsProcessing(false)
+        setIsStreaming(false)
+        // return null
+      } finally {
+        setIsProcessing(false)
+      }
+    }, [currentConversationId, createConversation, setIsStreaming, switchConversation, appendMessage, setShouldResponse, sendChatMessage, setMessageScratchpad, updateUserMessageId, isProcessing,setIsProcessing, router, appendError]
+  )
   return sendMessage
 }
+
 
 export function useIsThinking() {
   return messageStore(state => state.isThinking)
@@ -157,12 +424,12 @@ export function useSetIsThinking() {
   return messageStore(state => state.setIsThinking)
 }
 
-export function useStreamingMessageId() {
-  return messageStore(state => state.streamingMessageId)
+export function useIsStreaming() {
+  return messageStore(state => state.isStreaming)
 }
 
-export function useSetStreamingMessageId() {
-  return messageStore(state => state.setStreamingMessageId)
+export function useSetIsStreaming() {
+  return messageStore(state => state.setIsStreaming)
 }
 
 export function useMessageScratchpad() {
@@ -173,6 +440,7 @@ export function useSetMessageScratchpad() {
   return messageStore(state => state.setMessageScratchpad)
 }
 
+// this should not be needed anymore, all of the responses logic is moved to useSendMessage
 export function useAutoResponse() {
   const isResponding = React.useRef(false)
   const shouldResponse = useShouldResponse()
