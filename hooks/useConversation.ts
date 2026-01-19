@@ -1,70 +1,96 @@
-import * as React from "react"
+import * as React from "react";
 import { conversationStore } from "@/lib/store/conversation_store";
 import { ChatConversationType } from "@/lib/type/conversation";
 import { useAppendError } from "./useError";
 
-
 interface useConversationHook {
-  conversations: ChatConversationType[];
-  currentConversationId: string | null
-  createConversation: (title: string, convId?:string) => void;
-  switchConversation: (id: string | null) => void;
+	conversations: ChatConversationType[];
+	currentConversationId: string | null;
+	createConversation: (title: string, convId?: string) => void;
+	switchConversation: (id: string | null) => void;
 }
 
-export default function useConversation(dummy:string[] =[]):useConversationHook {
-    const {
-      conversations,
-      currentConversationId,
-      createConversation,
-      switchConversation,
-    } = conversationStore();
+export default function useConversation(
+	dummy: string[] = [],
+): useConversationHook {
+	const {
+		conversations,
+		currentConversationId,
+		createConversation,
+		switchConversation,
+	} = conversationStore();
 
+	const memoizedDummy = React.useMemo(() => {
+		return dummy;
+	}, [dummy]);
+	const init = React.useRef(false);
 
-    const init = React.useRef(false)
-    
-    React.useEffect(() => {
-      if (!init.current && conversations.length === 0 && dummy.length > 0) {
-        init.current = true
-        dummy.forEach((e) => createConversation(e))
-      }
-    }, []) // to render dummy chat conversation
+	React.useEffect(() => {
+		if (
+			!init.current &&
+			conversations.length === 0 &&
+			memoizedDummy.length > 0
+		) {
+			init.current = true;
+			memoizedDummy.forEach((e) => {
+				createConversation(e);
+			});
+		}
+	}, [memoizedDummy, createConversation, conversations]); // to render dummy chat conversation
 
-    return React.useMemo(() => ({
-      conversations,
-      currentConversationId,
-      createConversation,
-      switchConversation
-    }), [conversations, currentConversationId, createConversation, switchConversation])
+	return React.useMemo(
+		() => ({
+			conversations,
+			currentConversationId,
+			createConversation,
+			switchConversation,
+		}),
+		[
+			conversations,
+			currentConversationId,
+			createConversation,
+			switchConversation,
+		],
+	);
 }
 
 export function useConversations() {
-  return conversationStore(state => state.conversations)
+	return conversationStore((state) => state.conversations);
 }
 
 export function useConversationId() {
-  return conversationStore(state => state.currentConversationId)
+	return conversationStore((state) => state.currentConversationId);
 }
 
 export function useCreateConversation() {
-  return conversationStore(state => state.createConversation)
+	return conversationStore((state) => state.createConversation);
 }
 
-export function useInitializeConversations(default_value:string[] = []) {
-  const conversations = useConversations()
-  const createConversation = useCreateConversation()
+export function useInitializeConversations(default_value: string[] = []) {
+	const conversations = useConversations();
+	const createConversation = useCreateConversation();
+	const memoizedDefaultValue = React.useMemo(() => {
+		return default_value;
+	}, [default_value]);
 
-  const init = React.useRef(false)
+	const init = React.useRef(false);
 
-  React.useEffect(() => {
-    if (!init.current && conversations.length === 0 && default_value.length > 0 ) {
-      init.current = true
-      default_value.forEach((e) => createConversation(e))
-    }
-  }, [conversations.length, default_value.length, createConversation])
+	React.useEffect(() => {
+		if (
+			!init.current &&
+			conversations.length === 0 &&
+			memoizedDefaultValue.length > 0
+		) {
+			init.current = true;
+			memoizedDefaultValue.forEach((e) => {
+				createConversation(e);
+			});
+		}
+	}, [conversations.length, memoizedDefaultValue, createConversation]);
 }
 
 export function useSwitchConversation() {
-  return conversationStore(state=> state.switchConversation)
+	return conversationStore((state) => state.switchConversation);
 }
 
 // export function useFetchConversations() {
@@ -86,21 +112,21 @@ export function useSwitchConversation() {
 // }
 
 export function useFetchConversations() {
-  return conversationStore(state => state.loadConversation)
+	return conversationStore((state) => state.loadConversation);
 }
 
 export function useIsFullyLoaded() {
-  return conversationStore(state => state.isFullyLoaded)
+	return conversationStore((state) => state.isFullyLoaded);
 }
 
 export function useIsLoadingConv() {
-  return conversationStore(state => state.isLoadingConversations)
+	return conversationStore((state) => state.isLoadingConversations);
 }
 
 export function useUpdateConversationTitle() {
-  return conversationStore(state => state.updateConversationTitle)
+	return conversationStore((state) => state.updateConversationTitle);
 }
 
 export function useRemoveConversation() {
-  return conversationStore(state => state.removeConversation)
+	return conversationStore((state) => state.removeConversation);
 }
