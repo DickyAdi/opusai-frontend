@@ -9,4 +9,4 @@ export const ALLOWED_MIME_CHAT_UPLOAD_FILE = [
 	"application/vnd.ms-excel",
 	"application/csv",
 ];
-export const BASE_URL = "http://192.168.99.20:3000/";
+export const BASE_URL = "http://192.168.99.22:3000/";

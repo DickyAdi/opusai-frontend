@@ -19,20 +19,31 @@ import {
 import { useFetchChunk } from "@/hooks/useRag";
 import { Spinner } from "@/components/ui/spinner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 const FileReference = memo(function FileReference({
 	reference,
+	variant = "active",
 }: {
 	reference: RefType;
+	variant?: "active" | "non-active";
 }) {
 	const [openModal, setOpenModal] = useState<boolean>(false);
+	const baseButtonStyle = "rounded-full mx-auto my-auto h-6 w-6";
 
 	return (
 		<>
 			<HoverCard>
 				<HoverCardTrigger asChild>
 					<Button
-						className="rounded-full mx-auto my-auto h-6 w-6"
+						className={
+							variant === "active"
+								? baseButtonStyle
+								: cn([
+										baseButtonStyle,
+										"hover:bg-transparent! hover:text-foreground",
+									])
+						}
 						variant={"ghost"}
 						onClick={() => setOpenModal(true)}
 					>

@@ -21,9 +21,30 @@ const ChatMessage = memo(function ChatMessage({
 
 	const memoizedReference = useMemo(() => {
 		if (references && references.length >= 0) {
-			return references.map((e) => (
-				<FileReference key={e.source_id} reference={e} />
-			));
+			return references.map((e) => {
+				if (e.source_type === "uploaded_file") {
+					return (
+						<FileReference
+							key={crypto.randomUUID()}
+							reference={e}
+							variant="non-active"
+						/>
+					);
+				}
+				if (e.source_type === "knowledge_base") {
+					return <FileReference key={e.source_id} reference={e} />;
+				}
+				if (e.source_type === "tabular") {
+					return (
+						<FileReference
+							key={crypto.randomUUID()}
+							reference={e}
+							variant="non-active"
+						/>
+					);
+				}
+				return null;
+			});
 		}
 		return null;
 	}, [references]);
@@ -47,14 +68,14 @@ const ChatMessage = memo(function ChatMessage({
 						<CopyButton content={message} />
 						<div>
 							{memoizedReference && memoizedReference.length >= 0 ? (
-								<div className="flex flex-row bg-card rounded-lg p-1 items-center gap-1">
-									<p className="text-sm">
+								<div className="flex flex-row bg-card rounded-lg p-1.5 items-center">
+									<p className="text-xs">
 										AI is referencing to {memoizedReference?.length} knowledge
 									</p>
 									{memoizedReference}
 								</div>
 							) : (
-								<p className="text-sm">AI has no reference</p>
+								<p className="text-xs">AI has no reference</p>
 							)}
 						</div>
 					</div>
@@ -69,9 +90,6 @@ const ChatMessage = memo(function ChatMessage({
 							{message}
 						</ReactMarkdown>
 					</div>
-					{/* <div className="mt-1 space-x-1">
-						<CopyButton content={message} />
-					</div> */}
 				</div>
 			)}
 		</>
