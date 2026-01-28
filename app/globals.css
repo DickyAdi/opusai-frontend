@@ -622,11 +622,11 @@ html.Inter * {
 }
 
 span.search-highlight {
-  background-color: var(--color-accent);
+  background-color: var(--ring);
   color: var(--color-accent-foreground);
   font-weight: bold;
-  padding: 0.2rem;
-  border-radius: 0.25rem;
+  padding: 0.15rem;
+  border-radius: 0.3rem;
 }
 
 @layer base {

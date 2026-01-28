@@ -88,6 +88,12 @@ export type ChatStartData = {
 	response_id: string;
 };
 
+export type ChatStatusData = {
+	message_id: string;
+	step: string;
+	status: string;
+};
+
 const toolChoiceType = {
 	AUTO: "auto",
 	TOOL_SEARCH_DOCUMENTS: "TOOL_SEARCH_DOCUMENTS",

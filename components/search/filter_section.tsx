@@ -17,7 +17,7 @@ const FilterSection = memo(function FilterSection({
 				selectedFieldSchemas.map((e) => (
 					<div key={e.id} className="border p-2 rounded-lg">
 						<div className="flex flex-row items-center justify-between">
-							<h4 className="text-base font-semibold capitalize">{e.name}</h4>
+							<h4 className="text-base capitalize">{e.name}</h4>
 							<h4 className="text-xs capitalize">({e.type})</h4>
 						</div>
 					</div>

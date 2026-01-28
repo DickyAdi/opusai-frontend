@@ -20,6 +20,7 @@ interface MessageStoreState {
 	shouldResponse: boolean;
 	isStreaming: boolean;
 	isThinking: boolean;
+	thinkingStatus: string;
 	messageScratchpad: string;
 	availableModels: ModelType[];
 	selectedModel: string;
@@ -46,6 +47,7 @@ interface MessageStoreState {
 	}) => void;
 	setShouldResponse: (e: boolean) => void;
 	setIsThinking: (e: boolean) => void;
+	setThinkingStatus: (value: string) => void;
 	setIsStreaming: (e: boolean) => void;
 	setMessageScratchpad: (value: string | ((prev: string) => string)) => void;
 	setSelectedModel: (model: string) => void;
@@ -79,19 +81,6 @@ const appendMessageFunc = ({
 	references?: RefType[];
 }) => {
 	const last_msg: ChatMessageType = state.messages[state.messages.length - 1];
-	// console.log("appendMessageFunc called:", {
-	// 	role,
-	// 	messageLength: message.length,
-	// 	id,
-	// 	hasReferences: !!references && references.length > 0,
-	// 	lastMsgRole: last_msg?.role,
-	// 	lastMsgId: last_msg?.id,
-	// 	lastMsgHasReferences: last_msg?.references?.length > 0,
-	// 	isDuplicate:
-	// 		last_msg?.role === "assistant" &&
-	// 		last_msg?.content === message &&
-	// 		last_msg?.id === id,
-	// });
 	if (
 		last_msg?.role === "assistant" &&
 		last_msg?.content === message &&
@@ -117,6 +106,7 @@ export const messageStore = create<MessageStoreState>()(
 			cache: {},
 			messages: [],
 			isThinking: false,
+			thinkingStatus: "",
 			isStreaming: false,
 			messageScratchpad: "",
 			availableModels: [],
@@ -169,16 +159,6 @@ export const messageStore = create<MessageStoreState>()(
 				id?: string;
 				references?: RefType[];
 			}) => {
-				// console.trace("📍 appendMessage called from:");
-				// console.log(
-				// 	"Current messages array:",
-				// 	get().messages.map((m) => ({
-				// 		id: m.id,
-				// 		role: m.role,
-				// 		contentLength: m.content.length,
-				// 		hasRefs: m.references && m.references.length > 0,
-				// 	})),
-				// );
 				set((state) => ({
 					messages: appendMessageFunc({
 						state,
@@ -189,19 +169,11 @@ export const messageStore = create<MessageStoreState>()(
 						references,
 					}).messages,
 				}));
-				// console.log(
-				// 	"After append:",
-				// 	get().messages.map((m) => ({
-				// 		id: m.id,
-				// 		role: m.role,
-				// 		contentLength: m.content.length,
-				// 		hasRefs: m.references && m.references.length > 0,
-				// 	})),
-				// );
 			},
 			shouldResponse: false,
 			setShouldResponse: (e: boolean) => set({ shouldResponse: e }),
 			setIsThinking: (e: boolean) => set({ isThinking: e }),
+			setThinkingStatus: (value: string) => set({ thinkingStatus: value }),
 			setIsStreaming: (e: boolean) => set({ isStreaming: e }),
 			setMessageScratchpad: (value: string | ((prev: string) => string)) =>
 				set((state) => ({
@@ -220,19 +192,15 @@ export const messageStore = create<MessageStoreState>()(
 				const CACHE_TTL = 5 * 60 * 1000;
 				set({ isLoadingModels: true });
 				try {
-					// const models = await fetchDummyModels() //this is for UI dev to replicate a dummies
-					const cachedModels = get().cache["available_models"];
+					const cachedModels = get().cache.available_models;
 					const now = Date.now();
 					if (cachedModels && now - cachedModels.timestamp < CACHE_TTL) {
 						console.log("Data already exists, returning with the cache data");
 						get().setAvailableModels(cachedModels.data);
 						return;
-						// return cachedModels.data
 					}
 					const models = await fetchModels();
 
-					// console.log(models)
-					// get().setAvailableModels(models)
 					set((state) => ({
 						cache: {
 							...state.cache,

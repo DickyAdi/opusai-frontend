@@ -2,6 +2,7 @@ import * as React from "react";
 import ChatMessageType, {
 	ChatCompletionData,
 	ChatStartData,
+	ChatStatusData,
 } from "@/lib/type/chat_message";
 import { messageStore } from "@/lib/store/message_store";
 import {
@@ -171,6 +172,14 @@ export function useClearFiles() {
 	return messageStore((state) => state.clearFiles);
 }
 
+export function useThinkingStatus() {
+	return messageStore((state) => state.thinkingStatus);
+}
+
+export function useSetIsThinkingStatus() {
+	return messageStore((state) => state.setThinkingStatus);
+}
+
 export function useChatAPI() {
 	const setIsThinking = useSetIsThinking();
 	const selectedModel = useSelectedModel();
@@ -181,6 +190,7 @@ export function useChatAPI() {
 	const clearFiles = useClearFiles();
 	const appendError = useAppendError();
 	const setMessageScratchpad = useSetMessageScratchpad();
+	const setThinkingStatus = useSetIsThinkingStatus();
 	const setIsStreaming = useSetIsStreaming();
 	const chunkQueueRef = React.useRef<string[]>([]);
 	const processingRef = React.useRef(false);
@@ -196,12 +206,24 @@ export function useChatAPI() {
 				processingRef.current = false;
 				return;
 			}
-
 			const chunk = chunkQueueRef.current.shift()!;
 			setMessageScratchpad((prev) => prev + chunk);
 
+			const queueSize = chunkQueueRef.current.length;
+
+			if (queueSize > 10) {
+				requestAnimationFrame(processNext);
+			} else if (queueSize > 0) {
+				setTimeout(processNext, 16);
+			} else {
+				setTimeout(processNext, 50);
+			}
+
+			// const chunk = chunkQueueRef.current.shift()!;
+			// setMessageScratchpad((prev) => prev + chunk);
+
 			// setTimeout(processNext, 30); // 30ms to stop react batch render (original solution)
-			requestAnimationFrame(processNext); //trying to fix stream starts after completion
+			// requestAnimationFrame(processNext); //trying to fix stream starts after completion
 		};
 
 		processNext();
@@ -233,11 +255,11 @@ export function useChatAPI() {
 					conversation_id: conversation_id,
 					query: message,
 					model: selectedModel,
-					file: files.length > 0 ? true : false,
+					file: files.length > 0,
 					file_paths: filesData
 						? filesData.files.map((data) => data.file_path)
 						: [],
-					VDB: false,
+					VDB: true,
 					system_prompt_id: prompt_id,
 					temperature: parameter.temperature,
 					stream: true,
@@ -249,6 +271,9 @@ export function useChatAPI() {
 						if (onStart) {
 							onStart(data);
 						}
+					},
+					onStatusChange: (status: ChatStatusData) => {
+						setThinkingStatus(status.status);
 					},
 					onChunk: (chunk: string) => {
 						chunkQueueRef.current.push(chunk);
@@ -263,6 +288,7 @@ export function useChatAPI() {
 								clearInterval(checkQueue);
 								setIsStreaming(false);
 								setIsThinking(false);
+								setThinkingStatus("");
 								if (onComplete) {
 									onComplete(data);
 								}
@@ -272,6 +298,7 @@ export function useChatAPI() {
 					onError: (error: string) => {
 						setIsStreaming(false);
 						setIsThinking(false);
+						setThinkingStatus("");
 						chunkQueueRef.current = [];
 						processingRef.current = false;
 						messageStore.getState().setMessageScratchpad("");
@@ -309,6 +336,7 @@ export function useChatAPI() {
 			setMessageScratchpad,
 			setIsStreaming,
 			processChunkQueue,
+			setThinkingStatus,
 		],
 	);
 	return { sendChatMessage };

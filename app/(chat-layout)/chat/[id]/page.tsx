@@ -26,18 +26,5 @@ export default function ChatUserPage() {
 				<ChatInputArea isRedirect={false} />
 			</div>
 		</div>
-		// <div className="relative flex flex-col h-full">
-		//   <ScrollArea className="flex-1 overflow-y-auto pb-32">
-		//     <div className="mx-auto space-y-4 max-w-3xl">
-		//       <ChatListMessage />
-		//     </div>
-		//   </ScrollArea>
-		//   <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
-		//     <div className="h-32 bg-linear-to-t from-background via-background/80 to-transparent pointer-events-none" />
-		//     <div className="pointer-events-auto">
-		//       <ChatInputArea isRedirect={false}/>
-		//     </div>
-		//   </div>
-		// </div>
 	);
 }

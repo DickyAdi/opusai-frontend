@@ -3,6 +3,7 @@ import type {
 	ChatCompletionData,
 	ChatErrorData,
 	ChatStartData,
+	ChatStatusData,
 	ToolChoiceType,
 } from "../type/chat_message";
 import { BASE_URL } from "../config/constants";
@@ -36,6 +37,7 @@ export async function fetchChat({
 	db_connect = false,
 	headers,
 	onStart,
+	onStatusChange,
 	onChunk,
 	onComplete,
 	onError,
@@ -53,6 +55,7 @@ export async function fetchChat({
 	db_connect: boolean;
 	headers?: Record<string, string>;
 	onStart?: (data: ChatStartData) => void;
+	onStatusChange?: (status: ChatStatusData) => void;
 	onChunk?: (chunk: string) => void;
 	onComplete?: (data: ChatCompletionData) => void;
 	onError?: (error: string) => void;
@@ -124,6 +127,14 @@ export async function fetchChat({
 								}
 								break;
 
+							case "chat.status":
+								{
+									const statusData = JSON.parse(eventData) as ChatStatusData;
+									if (statusData && onStatusChange) {
+										onStatusChange(statusData);
+									}
+								}
+								break;
 							case "chat.chunk":
 								{
 									const chunkData = JSON.parse(eventData) as ChatChunkData;
