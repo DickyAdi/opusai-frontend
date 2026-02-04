@@ -10,7 +10,7 @@ import {
 export function ChatAIThinking() {
 	const thinkingStatus = useThinkingStatus();
 	return (
-		<div className="flex gap-2 p-3 border dark:border-zinc-900 border-neutral-900 rounded-xl">
+		<div className="flex gap-2 p-3 border rounded-xl">
 			<Accordion
 				type="single"
 				collapsible
