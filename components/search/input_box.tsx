@@ -41,6 +41,7 @@ export function SearchInputBox() {
 				onKeyDown={prevent_default_enter}
 				onChange={(e) => setQuery(e.target.value)}
 				disabled={isSearching}
+				className="md:text-base text-xs"
 			/>
 			<InputGroupAddon align={"inline-end"}>
 				<InputGroupButton
