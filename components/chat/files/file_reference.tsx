@@ -16,7 +16,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { useFetchChunk } from "@/hooks/useRag";
+import { useFetchChunk, useFetchPdf } from "@/hooks/useRag";
 import { Spinner } from "@/components/ui/spinner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -74,7 +74,8 @@ const FileReference = memo(function FileReference({
 					onOpen={openModal}
 					setOnOpen={setOpenModal}
 					refName={reference.source_name}
-					refParentId={reference.location.parent_id}
+					// refParentId={reference.location.parent_id}
+					refSourceName={reference.source_name}
 				/>
 			) : null}
 		</>
@@ -85,33 +86,36 @@ function FileReferenceModal({
 	onOpen,
 	setOnOpen,
 	refName,
-	refParentId,
+	refSourceName,
 }: {
 	onOpen: boolean;
 	setOnOpen: (open: boolean) => void;
 	refName: string;
-	refParentId: string;
+	refSourceName: string;
 }) {
-	const { getChunk } = useFetchChunk();
-	const [content, setContent] = useState<string>("");
+	// const { getChunk } = useFetchChunk();
+	const { getPdf } = useFetchPdf();
+	const [content, setContent] = useState<Blob | null>(null);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	useEffect(() => {
 		const callAPI = async () => {
 			setIsLoading(true);
 			try {
-				const data = await getChunk(refParentId);
-				setContent(data.content);
+				// const data = await getChunk(refParentId);
+				const data = await getPdf(refSourceName);
+				// setContent(data.content);
+				setContent(data);
 			} catch (error) {
-				setContent("FAILED TO RETRIEVE DATA");
+				// setContent("FAILED TO RETRIEVE DATA");
 			} finally {
 				setIsLoading(false);
 			}
 		};
-		if (refParentId) {
+		if (refSourceName) {
 			callAPI();
 		}
-	}, [getChunk, refParentId]);
+	}, [getPdf, refSourceName]);
 
 	return (
 		<Dialog open={onOpen} onOpenChange={setOnOpen}>
@@ -123,14 +127,15 @@ function FileReferenceModal({
 					<Spinner />
 				) : (
 					<div className="text-sm text-justify rounded-lg h-128">
-						<ScrollArea className="h-full p-4">
+						{/* <ScrollArea className="h-full p-4">
 							<ReactMarkdown
 								rehypePlugins={[rehypeHighlight]}
 								remarkPlugins={[remarkGfm]}
 							>
 								{content}
 							</ReactMarkdown>
-						</ScrollArea>
+						</ScrollArea> */}
+						<PDFViewer file={content as File} />
 					</div>
 				)}
 			</DialogContent>

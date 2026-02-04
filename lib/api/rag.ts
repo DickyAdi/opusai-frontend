@@ -28,3 +28,22 @@ export function fetchChunk(chunkId: string) {
 			throw error;
 		});
 }
+
+// this should support any kind of files tho but named fetchPdf because mainly will be used as Pdf fetcher
+export async function fetchPdf(filename: string) {
+	const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/documents/files/${filename}`;
+
+	const response = await fetch(url, { method: "GET" });
+
+	if (!response.ok) {
+		throw new Error(`An error occured - ${response.status}`);
+	}
+
+	const buffer = await response.arrayBuffer();
+
+	const blob = new Blob([buffer], {
+		type: response.headers.get("content-type") || "application/pdf",
+	});
+
+	return blob;
+}

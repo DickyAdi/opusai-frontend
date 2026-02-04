@@ -26,7 +26,7 @@ const ChatMessage = memo(function ChatMessage({
 				const refs = references as RefType[];
 				return refs.map((e) => {
 					if (e.source_type === "knowledge_base") {
-						return <FileReference key={e.source_id} reference={e} />;
+						return <FileReference key={crypto.randomUUID()} reference={e} />;
 					} else if (["uploaded_file", "tabular"].includes(e.source_type)) {
 						return (
 							<FileReference

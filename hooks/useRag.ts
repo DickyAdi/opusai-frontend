@@ -1,4 +1,4 @@
-import { fetchChunk } from "@/lib/api/rag";
+import { fetchChunk, fetchPdf } from "@/lib/api/rag";
 import { useCallback } from "react";
 
 export function useFetchChunk() {
@@ -6,4 +6,11 @@ export function useFetchChunk() {
 		return await fetchChunk(chunkId);
 	}, []);
 	return { getChunk };
+}
+
+export function useFetchPdf() {
+	const getPdf = useCallback(async (filename: string) => {
+		return await fetchPdf(filename);
+	}, []);
+	return { getPdf };
 }
