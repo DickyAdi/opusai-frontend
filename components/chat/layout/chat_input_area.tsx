@@ -49,7 +49,7 @@ export default function ChatInputArea({
 
 	return (
 		// <div className="p-2 md:h-46 lg:h-46">
-		<div className="p-2 pt-4 pb-8 bg-linear-to-t from-background from-85% to-transparent">
+		<div className="p-2 pt-4 md:pb-8 pb-14 bg-linear-to-t from-background from-85% to-transparent">
 			<div className="h-6 mb-1.5">
 				<ChatFileContainer />
 			</div>
@@ -65,7 +65,7 @@ export default function ChatInputArea({
 						disabled={isThinking}
 					/>
 					<InputGroupAddon align="block-end">
-						<div className="flex items-center h-4 gap-2">
+						<div className="flex items-center h-4 md:gap-2">
 							<ChatFileUpload />
 							<Separator orientation="vertical" />
 							<ChatModelSwitch />

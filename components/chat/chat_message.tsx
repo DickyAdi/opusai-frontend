@@ -49,7 +49,7 @@ const ChatMessage = memo(function ChatMessage({
 	}, [references, sender]);
 
 	return (
-		<div className="flex flex-col">
+		<div className="flex flex-col text-justify">
 			{sender === "assistant" ? (
 				<div className="flex flex-col justify-start">
 					<div

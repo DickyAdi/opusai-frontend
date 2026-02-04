@@ -7,8 +7,8 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useParameterSettings } from "@/hooks/useChat";
-import { ChatParameterSettingsType } from "@/lib/type/chat_parameter";
-import { useRef, useState } from "react";
+import type { ChatParameterSettingsType } from "@/lib/type/chat_parameter";
+import { useState } from "react";
 
 export function ChatParameterPopover({
 	open,
@@ -51,7 +51,7 @@ export function ChatParameterPopover({
 									<p className="text-sm">{temperature}</p>
 								</div>
 							</TooltipTrigger>
-							<TooltipContent>
+							<TooltipContent className="text-wrap w-sm md:w-fit">
 								<p>
 									Controls AI deterministic output. Higher temperature will make
 									AI be more expressive and lower is the opposite.
