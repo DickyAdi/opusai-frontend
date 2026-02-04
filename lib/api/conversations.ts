@@ -1,6 +1,5 @@
-import { error } from "console";
 // import { BASE_URL } from "../config/constants";
-import { ChatConversationType } from "../type/conversation";
+import type { ChatConversationType } from "../type/conversation";
 import type { ChatMessageType } from "../type/chat_message";
 
 interface ConversationSchema {
