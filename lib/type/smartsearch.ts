@@ -1,7 +1,10 @@
+export const FieldTypeValue = ["text", "number", "datetime"] as const;
+export type FieldType = (typeof FieldTypeValue)[number];
+
 export interface SmartSearchFieldSchema {
 	name: string;
 	description: string;
-	type: string;
+	type: FieldType;
 	id: string;
 	group_id: string;
 	group_name: string;
@@ -38,3 +41,18 @@ export interface SmartSearchResponse {
 	limit: number;
 	offset: number;
 }
+
+export interface SmartSearchGroupInput
+	extends Pick<SmartSearchGroupSchema, "name" | "description" | "id"> {
+	fields: SmartSearchFieldInput[];
+}
+
+export interface SmartSearchFieldInput
+	extends Pick<
+		SmartSearchFieldSchema,
+		"name" | "description" | "type" | "id"
+	> {}
+
+export interface SmartSearchCreateSchemaRequest
+	extends Pick<SmartSearchGroupSchema, "name" | "description">,
+		Pick<SmartSearchFieldSchema, "name" | "description" | "type"> {}

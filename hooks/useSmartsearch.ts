@@ -2,7 +2,10 @@ import { fetchSmartSearchSchema } from "@/lib/api/smartsearch";
 import type { FetchSmartSearchSchemaResponse } from "@/lib/type/smartsearch";
 import { useEffect, useState } from "react";
 import { useAppendError } from "./useError";
-import { smartSearchStore } from "@/lib/store/smartsearch_store";
+import {
+	smartSearchSchemaStore,
+	smartSearchStore,
+} from "@/lib/store/smartsearch_store";
 
 export function useFetchSchema() {
 	const [schemas, setSchemas] = useState<FetchSmartSearchSchemaResponse>({
@@ -51,4 +54,12 @@ export function useGetIsSearching() {
 
 export function useGetSetIsSearching() {
 	return smartSearchStore((state) => state.setIsSearching);
+}
+
+export function useSmartSearchSchemas() {
+	return smartSearchSchemaStore((state) => state.schemas);
+}
+
+export function useLoadSmartSearchSchemas() {
+	return smartSearchSchemaStore((state) => state.loadSchemas);
 }
