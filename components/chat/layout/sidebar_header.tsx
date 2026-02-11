@@ -6,14 +6,16 @@ import Link from "next/link";
 import { Settings, SquareArrowOutUpRightIcon, Search } from "lucide-react";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
+import { useCreateNewConversation } from "@/hooks/useCreateNewConversation";
 
 export default function ChatSidebarHeader() {
-	const { switchConversation } = useConversation();
-	const router = useRouter();
-	const newChatHandler = () => {
-		switchConversation(null);
-		router.push("/chat");
-	};
+	// const { switchConversation } = useConversation();
+	// const router = useRouter();
+	// const newChatHandler = () => {
+	// 	switchConversation(null);
+	// 	router.push("/chat");
+	// };
+	const newChatHandler = useCreateNewConversation();
 
 	return (
 		<SidebarHeader>

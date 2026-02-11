@@ -1,16 +1,19 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useClearMessages } from "@/hooks/useChat";
 import { useSwitchConversation } from "@/hooks/useConversation";
 import Link from "next/link";
 import { useEffect } from "react";
 
 export default function Home() {
 	const switchConversation = useSwitchConversation();
+	const clearMessages = useClearMessages();
 
 	useEffect(() => {
+		clearMessages();
 		switchConversation(null);
-	}, [switchConversation]);
+	}, [switchConversation, clearMessages]);
 
 	return (
 		<div className="flex flex-col h-screen w-screen justify-center items-center">

@@ -26,7 +26,6 @@ export function fetchConversations(
 	user_id?: string,
 ): Promise<ConversationsResponseSchema> {
 	const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/conversations?user_id=${user_id ? user_id : ""}&page=${page}&limit=${limit}`;
-	console.log(`${process.env.NEXT_PUBLIC_BASE_URL}`);
 	return fetch(url, {
 		method: "GET",
 	})

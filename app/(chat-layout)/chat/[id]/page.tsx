@@ -2,19 +2,25 @@
 import ChatInputArea from "@/components/chat/layout/chat_input_area";
 import { ChatListMessage } from "@/components/chat/list_message";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-	useConversationId,
-	useSwitchConversation,
-} from "@/hooks/useConversation";
-import { useEffect } from "react";
+import { useMessages } from "@/hooks/useChat";
+import { useSwitchConversation } from "@/hooks/useConversation";
+import { useParams } from "next/navigation";
+import { useEffect, useRef } from "react";
 
 export default function ChatUserPage() {
-	const currentConversationId = useConversationId();
+	const params = useParams();
+	const pathConversationId = params.id as string;
 	const switchConversation = useSwitchConversation();
+	const messages = useMessages();
+	const hasSwitched = useRef(false);
+	console.log(`Existing conversation message store has ${messages.length}`);
 
 	useEffect(() => {
-		switchConversation(currentConversationId);
-	}, [currentConversationId, switchConversation]);
+		if (!hasSwitched.current && pathConversationId) {
+			switchConversation(pathConversationId);
+			hasSwitched.current = true;
+		}
+	}, [pathConversationId, switchConversation]);
 	return (
 		<div className="relative flex flex-col h-screen">
 			<ScrollArea className="flex-1 overflow-y-auto">

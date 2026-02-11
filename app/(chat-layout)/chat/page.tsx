@@ -2,16 +2,18 @@
 
 import ChatInputArea from "@/components/chat/layout/chat_input_area";
 import { Spinner } from "@/components/ui/spinner";
-import { useIsProcessing } from "@/hooks/useChat";
+import {
+	useClearMessages,
+	useIsProcessing,
+	useMessages,
+} from "@/hooks/useChat";
 import { useSwitchConversation } from "@/hooks/useConversation";
 import { useEffect } from "react";
 
 export default function ChatPage() {
 	const isProcessing = useIsProcessing();
-	const switchConversation = useSwitchConversation();
-	useEffect(() => {
-		switchConversation(null);
-	}, [switchConversation]);
+	const messages = useMessages();
+	console.log(`New conversation message store has ${messages.length}`);
 
 	const welcomeMessage = (
 		<div className="flex flex-col justify-center">

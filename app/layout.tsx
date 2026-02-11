@@ -6,36 +6,37 @@ import { Toaster } from "@/components/ui/sonner";
 import ErrorToaster from "@/components/utils/error_toaster";
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+	variable: "--font-geist-sans",
+	subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+	variable: "--font-geist-mono",
+	subsets: ["latin"],
 });
 
 const inter = Inter({
-  variable: "--font-inter",
-  subsets: ['latin']
-})
+	variable: "--font-inter",
+	subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: "Opus AI",
-  description: "Made by us for your customized needs",
+	title: "Opus AI",
+	description: "Made by us for your customized needs",
 };
 
 export default function RootLayout({
-  children,
+	children,
 }: Readonly<{
-  children: React.ReactNode;
+	children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
+	return (
+		<html lang="en" suppressHydrationWarning>
+			<head>
+				<script
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: <hydration and trusted>
+					dangerouslySetInnerHTML={{
+						__html: `
           (function () {
             try {
               var themeMode = localStorage.getItem('theme-mode-storage');
@@ -51,17 +52,17 @@ export default function RootLayout({
             } catch (e) {}
           })();
           `,
-          }}
-        />
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased`}
-      >
-        <NextTopLoader />
-        {children}
-        <Toaster />
-        <ErrorToaster />
-      </body>
-    </html>
-  );
+					}}
+				/>
+			</head>
+			<body
+				className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased`}
+			>
+				<NextTopLoader />
+				{children}
+				<Toaster />
+				<ErrorToaster />
+			</body>
+		</html>
+	);
 }
