@@ -252,10 +252,9 @@ export const messageStore = create<MessageStoreState>()(
 				set({ isLoadingMessages: true });
 				try {
 					const messages = await fetchConversationMessages(conversation_id);
-					console.log("Printing fetching messages!", messages);
 					set({ messages: messages });
 				} catch (error) {
-					throw Error("Cannot fetch messages for this conversation");
+					throw new Error("Cannot fetch messages for this conversation");
 					// console.error(`Cannot fetch messages for conversation id ${conversation_id}`)
 				} finally {
 					set({ isLoadingMessages: false });

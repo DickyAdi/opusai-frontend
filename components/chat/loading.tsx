@@ -11,7 +11,7 @@ export function ChatAIThinking() {
 	const thinkingStatus = useThinkingStatus();
 	return (
 		<div className="flex gap-2 p-3 border rounded-xl">
-			<Accordion
+			{/* <Accordion
 				type="single"
 				collapsible
 				// defaultValue="nested-status"
@@ -29,7 +29,9 @@ export function ChatAIThinking() {
 						</AccordionContent>
 					)}
 				</AccordionItem>
-			</Accordion>
+			</Accordion> */}
+			<Spinner className="h-4 w-4" />{" "}
+			<p className="text-sm">{thinkingStatus}</p>
 		</div>
 	);
 }

@@ -14,7 +14,7 @@ import {
 } from "./useConversation";
 import { fetchChat } from "@/lib/api/chat";
 import { useAppendError } from "./useError";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 interface useChatHook {
 	messages: ChatMessageType[];
@@ -125,7 +125,9 @@ export function useConversationMessages() {
 		if (!conversationChanged) {
 			return;
 		}
-
+		if (!currentConversationId) {
+			return;
+		}
 		if (currentConversationId && !isStreaming && !isProcessing) {
 			getConversationMessages(currentConversationId);
 		} else if (currentConversationId === null) {

@@ -35,6 +35,7 @@ export default function RootLayout({
 		<html lang="en" suppressHydrationWarning>
 			<head>
 				<script
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: <hydration and trusted>
 					dangerouslySetInnerHTML={{
 						__html: `
           (function () {
