@@ -15,6 +15,7 @@ import {
 import { fetchChat } from "@/lib/api/chat";
 import { useAppendError } from "./useError";
 import { useParams, useRouter } from "next/navigation";
+import { flushSync } from "react-dom";
 
 interface useChatHook {
 	messages: ChatMessageType[];
@@ -197,6 +198,7 @@ export function useChatAPI() {
 	const setIsStreaming = useSetIsStreaming();
 	const chunkQueueRef = React.useRef<string[]>([]);
 	const processingRef = React.useRef(false);
+	const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 	const processChunkQueue = React.useCallback(() => {
 		if (processingRef.current || chunkQueueRef.current.length === 0) {
 			return;
@@ -210,16 +212,24 @@ export function useChatAPI() {
 				return;
 			}
 			const chunk = chunkQueueRef.current.shift()!;
-			setMessageScratchpad((prev) => prev + chunk);
+
+			flushSync(() => {
+				setMessageScratchpad((prev) => prev + chunk);
+			});
 
 			const queueSize = chunkQueueRef.current.length;
+			console.log(`Printing queueSize ${queueSize}`);
 
-			if (queueSize > 10) {
+			if (queueSize > 20) {
+				console.log("am i running 1");
 				requestAnimationFrame(processNext);
 			} else if (queueSize > 0) {
-				setTimeout(processNext, 16);
+				console.log("am i running 2");
+				setTimeout(processNext, 8);
 			} else {
+				console.log("am i running 3");
 				setTimeout(processNext, 50);
+				// processingRef.current = false;
 			}
 
 			// const chunk = chunkQueueRef.current.shift()!;
@@ -239,6 +249,11 @@ export function useChatAPI() {
 			onStart?: (data: ChatStartData) => void,
 			onComplete?: (data: ChatCompletionData) => void,
 		) => {
+			if (intervalRef.current) {
+				clearInterval(intervalRef.current);
+				intervalRef.current = null;
+			}
+
 			try {
 				let filesData = null;
 
@@ -280,25 +295,54 @@ export function useChatAPI() {
 					},
 					onChunk: (chunk: string) => {
 						chunkQueueRef.current.push(chunk);
-						processChunkQueue();
+						if (!processingRef.current) {
+							processChunkQueue();
+						}
 					},
 					onComplete: (data: ChatCompletionData) => {
-						const checkQueue = setInterval(() => {
+						intervalRef.current = setInterval(() => {
 							if (
 								chunkQueueRef.current.length === 0 &&
 								!processingRef.current
 							) {
-								clearInterval(checkQueue);
+								clearInterval(intervalRef.current!);
+								intervalRef.current = null;
+
 								setIsStreaming(false);
 								setIsThinking(false);
 								setThinkingStatus("");
-								if (onComplete) {
-									onComplete(data);
-								}
+								if (onComplete) onComplete(data);
 							}
 						}, 50);
+
+						// Safety timeout to prevent infinite intervals
+						setTimeout(() => {
+							if (intervalRef.current) {
+								clearInterval(intervalRef.current);
+								intervalRef.current = null;
+							}
+						}, 10000);
+						// const checkQueue = setInterval(() => {
+						// 	if (
+						// 		chunkQueueRef.current.length === 0 &&
+						// 		!processingRef.current
+						// 	) {
+						// 		clearInterval(checkQueue);
+						// 		setIsStreaming(false);
+						// 		setIsThinking(false);
+						// 		setThinkingStatus("");
+						// 		if (onComplete) {
+						// 			onComplete(data);
+						// 		}
+						// 	}
+						// }, 50);
+						// setTimeout(() => clearInterval(checkQueue), 10000)
 					},
 					onError: (error: string) => {
+						if (intervalRef.current) {
+							clearInterval(intervalRef.current);
+							intervalRef.current = null;
+						}
 						setIsStreaming(false);
 						setIsThinking(false);
 						setThinkingStatus("");
@@ -342,6 +386,11 @@ export function useChatAPI() {
 			setThinkingStatus,
 		],
 	);
+	React.useEffect(() => {
+		return () => {
+			if (intervalRef.current) clearInterval(intervalRef.current);
+		};
+	}, []);
 	return { sendChatMessage };
 }
 
