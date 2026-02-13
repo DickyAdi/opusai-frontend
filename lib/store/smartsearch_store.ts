@@ -39,7 +39,7 @@ interface SmartSearchSchemaCreateStoreState {
 			Pick<SmartSearchFieldInput, "description" | "name" | "type">
 		>,
 	) => void;
-	saveSchema: (groups: SmartSearchGroupInput[]) => Promise<void>;
+	saveSchema: (groups: SmartSearchGroupInput) => Promise<void>;
 }
 
 export const smartSearchStore = create<SmartsearchStoreState>((set, get) => ({
@@ -151,5 +151,5 @@ export const smartSearchSchemaCreateStore =
 				),
 			}));
 		},
-		saveSchema: async (groups: SmartSearchGroupInput[]) => {},
+		saveSchema: async (groups: SmartSearchGroupInput) => {},
 	}));

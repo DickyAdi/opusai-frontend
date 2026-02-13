@@ -3,6 +3,7 @@ import type { FetchSmartSearchSchemaResponse } from "@/lib/type/smartsearch";
 import { useEffect, useState } from "react";
 import { useAppendError } from "./useError";
 import {
+	smartSearchSchemaCreateStore,
 	smartSearchSchemaStore,
 	smartSearchStore,
 } from "@/lib/store/smartsearch_store";
@@ -62,4 +63,36 @@ export function useSmartSearchSchemas() {
 
 export function useLoadSmartSearchSchemas() {
 	return smartSearchSchemaStore((state) => state.loadSchemas);
+}
+
+export function useSmartSearchSchemaGroups() {
+	return smartSearchSchemaCreateStore((state) => state.groups);
+}
+
+export function useSmartSearchSchemaCreateGroup() {
+	return smartSearchSchemaCreateStore((state) => state.createGroup);
+}
+
+export function useSmartSearchSchemaUpdateGroup() {
+	return smartSearchSchemaCreateStore((state) => state.updateGroup);
+}
+
+export function useSmartSearchSchemaDeleteGroup() {
+	return smartSearchSchemaCreateStore((state) => state.deleteGroup);
+}
+
+export function useSmartSearchSchemaCreateField() {
+	return smartSearchSchemaCreateStore((state) => state.createField);
+}
+
+export function useSmartSearchSchemaUpdateField() {
+	return smartSearchSchemaCreateStore((state) => state.updateField);
+}
+
+export function useSmartSearchSchemaDeleteField() {
+	return smartSearchSchemaCreateStore((state) => state.deleteField);
+}
+
+export function useSmartSearchSchemaSave() {
+	return smartSearchSchemaCreateStore((state) => state.saveSchema);
 }
