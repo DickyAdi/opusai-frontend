@@ -67,7 +67,8 @@ export default function ChatSidebarHeader() {
 							Settings
 						</Button>
 					</Link>
-					<Link href="/search">
+					{/* Commented out for stripped down version */}
+					{/* <Link href="/search">
 						<Button
 							className="w-full text-md justify-start hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
 							variant="ghost"
@@ -75,7 +76,7 @@ export default function ChatSidebarHeader() {
 							<Search className="h-4 w-4 p-0" />
 							Smart file search
 						</Button>
-					</Link>
+					</Link> */}
 				</li>
 			</ul>
 		</SidebarHeader>
