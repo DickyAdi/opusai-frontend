@@ -13,6 +13,7 @@ import {
 	useResetInsertionFiles,
 } from "@/hooks/useRag";
 import { useAppendError } from "@/hooks/useError";
+import { Spinner } from "@/components/ui/spinner";
 
 const MAX_FILES = 10;
 
@@ -215,7 +216,14 @@ export default function KnowledgeUploadPage() {
 						</h1>
 						{files.length > 0 && (
 							<Button size="sm" onClick={handleUpload} disabled={isLoading}>
-								{isLoading ? "Uploading..." : `Upload All (${files.length})`}
+								{isLoading ? (
+									<>
+										<Spinner data-icon="inline-start" />
+										"Uploading..."
+									</>
+								) : (
+									`Upload All (${files.length})`
+								)}
 							</Button>
 						)}
 					</div>
