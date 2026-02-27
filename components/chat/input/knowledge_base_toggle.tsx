@@ -1,5 +1,5 @@
 import { Toggle } from "@/components/ui/toggle";
-import { useKnowledge, useSetKnowledge } from "@/hooks/useChat";
+import { useIsThinking, useKnowledge, useSetKnowledge } from "@/hooks/useChat";
 import { TextSearchIcon } from "lucide-react";
 import { memo } from "react";
 
@@ -7,6 +7,7 @@ export const KnowledgeBaseInputToggle = memo(
 	function KnowledgeBaseInputToggle() {
 		const knowledge = useKnowledge();
 		const setKnowledge = useSetKnowledge();
+		const isThinking = useIsThinking();
 
 		return (
 			<Toggle
@@ -14,6 +15,7 @@ export const KnowledgeBaseInputToggle = memo(
 				size="sm"
 				variant="default"
 				className="text-xs p-1"
+				disabled={isThinking}
 				pressed={knowledge}
 				onPressedChange={(pressed) => setKnowledge(pressed)}
 			>
