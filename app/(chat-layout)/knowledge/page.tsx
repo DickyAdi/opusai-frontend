@@ -14,6 +14,10 @@ import {
 } from "@/hooks/useRag";
 import { useAppendError } from "@/hooks/useError";
 import { Spinner } from "@/components/ui/spinner";
+import {
+	ALLOWED_MIME_CHAT_UPLOAD_FILE,
+	MAX_INSERTION_FILE_SIZE,
+} from "@/lib/config/constants";
 
 const MAX_FILES = 10;
 
@@ -36,8 +40,27 @@ export default function KnowledgeUploadPage() {
 			const selectedFiles = event.target.files;
 			if (!selectedFiles || selectedFiles.length === 0) return;
 
-			// Check if adding these files would exceed the limit
-			if (files.length + selectedFiles.length > MAX_FILES) {
+			// Filter out oversized files first
+			const validFiles = Array.from(selectedFiles).filter((file) => {
+				if (file.size > MAX_INSERTION_FILE_SIZE) {
+					appendError(
+						`${file.name} exceeds ${(MAX_INSERTION_FILE_SIZE / 1024 / 1024).toFixed(0)}MB limit and was skipped`,
+					);
+					return false;
+				} else if (!ALLOWED_MIME_CHAT_UPLOAD_FILE.includes(file.type)) {
+					appendError(`${file.name} type is not supported`);
+					return false;
+				}
+				return true;
+			});
+
+			if (validFiles.length === 0) {
+				if (event.target) event.target.value = "";
+				return;
+			}
+
+			// Check count limit with valid files only
+			if (files.length + validFiles.length > MAX_FILES) {
 				appendError(
 					`You can only upload up to ${MAX_FILES} files. Please remove some files first.`,
 				);
@@ -45,10 +68,9 @@ export default function KnowledgeUploadPage() {
 				return;
 			}
 
-			appendFile(Array.from(selectedFiles));
+			appendFile(validFiles); // Use the filtered array
 			hasLoadedRef.current = true;
 
-			// Reset input to allow selecting the same files again
 			if (event.target) event.target.value = "";
 		},
 		[appendFile, files.length, appendError],
