@@ -1,5 +1,10 @@
 import { create } from "zustand";
-import { insertKnowledge } from "../api/rag";
+import {
+	insertKnowledge,
+	retrieveKnowledge,
+	retrieveKnowledgeResponseSchema,
+} from "../api/rag";
+import { knowledgeType } from "../type/knowledge";
 
 interface insertionResponseSchema {
 	message: string;
@@ -7,9 +12,15 @@ interface insertionResponseSchema {
 	failed_count: number;
 }
 
+interface knowledgeRetrievePaginationSchema
+	extends Pick<retrieveKnowledgeResponseSchema, "pagination" | "success"> {}
+
 interface RagStoreState {
 	files: File[];
+	// knowledges: knowledgeType[];
 	isLoading: boolean;
+	// isLoadingKnowledge: boolean;
+	isLimitReached: boolean;
 	appendFile: (file: File | File[]) => void;
 	removeFile: (index: number) => void;
 	resetFiles: () => void;
@@ -18,11 +29,17 @@ interface RagStoreState {
 		smartsearch: boolean,
 	) => Promise<insertionResponseSchema>;
 	setLoading: (value: boolean) => void;
+	// setIsLoadingKnowledge: (value: boolean) => void;
+	setIsLimitReached: (e: boolean) => void;
+	// loadKnowledge: (limit:number, cursor:string) => Promise<knowledgeRetrievePaginationSchema>;
 }
 
 export const ragStoreState = create<RagStoreState>((set, get) => ({
 	files: [],
+	// knowledges: [],
 	isLoading: false,
+	// isLoadingKnowledge: false,
+	isLimitReached: false,
 	appendFile: (files: File | File[]) => {
 		if (Array.isArray(files)) {
 			set((state) => ({ files: [...state.files, ...files] }));
@@ -62,4 +79,19 @@ export const ragStoreState = create<RagStoreState>((set, get) => ({
 		}
 	},
 	setLoading: (value: boolean) => set({ isLoading: value }),
+	// setIsLoadingKnowledge: (value: boolean) => set({ isLoadingKnowledge: value }),
+	setIsLimitReached: (e: boolean) => set({ isLimitReached: e }),
+	// loadKnowledge: async (limit:number, cursor:string) => {
+	// 	set({isLoadingKnowledge:true})
+	// 	try {
+	// 		const response = await retrieveKnowledge(limit, cursor)
+	// 		set({knowledges: response.data})
+	// 		return {...response}
+	// 	} catch(err) {
+	// 		console.error("Error when retrieving knowledge")
+	// 		throw err
+	// 	} finally {
+	// 		set({isLoadingKnowledge:false})
+	// 	}
+	// }
 }));

@@ -30,26 +30,6 @@ interface SmartSearchSchemaStoreState {
 	loadSchemas: () => Promise<void>;
 }
 
-// interface SmartSearchSchemaCreateStoreState {
-// 	groups: SmartSearchGroupInput[];
-// 	createGroup: () => string;
-// 	deleteGroup: (groupId: string) => void;
-// 	updateGroup: (
-// 		groupId: string,
-// 		updates: Partial<Pick<SmartSearchGroupInput, "description" | "name">>,
-// 	) => void;
-// 	createField: (groupId: string) => string;
-// 	deleteField: (groupId: string, fieldId: string) => void;
-// 	updateField: (
-// 		groupId: string,
-// 		fieldId: string,
-// 		updates: Partial<
-// 			Pick<SmartSearchFieldInput, "description" | "name" | "type">
-// 		>,
-// 	) => void;
-// 	saveSchema: (groups: SmartSearchGroupInput) => Promise<void>;
-// }
-
 export const smartSearchStore = create<SmartsearchStoreState>((set, get) => ({
 	hits: [],
 	isSearching: false,
@@ -79,90 +59,6 @@ export const smartSearchSchemaStore = create<SmartSearchSchemaStoreState>(
 		},
 	}),
 );
-
-// export const smartSearchSchemaCreateStore =
-// 	create<SmartSearchSchemaCreateStoreState>((set) => ({
-// 		groups: [],
-// 		createGroup: () => {
-// 			const groupId = nanoid();
-// 			const newGroup: SmartSearchGroupInput = {
-// 				id: groupId,
-// 				name: "",
-// 				description: "",
-// 				fields: [],
-// 			};
-// 			set((state) => ({ groups: [newGroup, ...state.groups] }));
-// 			return groupId;
-// 		},
-// 		deleteGroup: (groupId: string) => {
-// 			set((state) => ({
-// 				groups: state.groups.filter((group) => group.id !== groupId),
-// 			}));
-// 		},
-// 		updateGroup: (
-// 			groupId: string,
-// 			updates: Partial<Pick<SmartSearchGroupInput, "description" | "name">>,
-// 		) => {
-// 			set((state) => ({
-// 				groups: state.groups.map((group) =>
-// 					group.id === groupId ? { ...group, ...updates } : group,
-// 				),
-// 			}));
-// 		},
-// 		createField: (groupId: string) => {
-// 			const fieldId = nanoid();
-// 			const firstTypeValue = FieldTypeValue[0];
-// 			const newField: SmartSearchFieldInput = {
-// 				id: fieldId,
-// 				name: "",
-// 				description: "",
-// 				type: firstTypeValue,
-// 			};
-// 			set((state) => ({
-// 				groups: state.groups.map((group) =>
-// 					group.id === groupId
-// 						? { ...group, fields: [...group.fields, newField] }
-// 						: group,
-// 				),
-// 			}));
-// 			return fieldId;
-// 		},
-// 		deleteField: (groupId: string, fieldId: string) => {
-// 			set((state) => ({
-// 				groups: state.groups.map((group) =>
-// 					group.id === groupId
-// 						? {
-// 								...group,
-// 								fields: group.fields.filter((field) => field.id !== fieldId),
-// 							}
-// 						: group,
-// 				),
-// 			}));
-// 		},
-// 		updateField: (
-// 			groupId: string,
-// 			fieldId: string,
-// 			updates: Partial<
-// 				Pick<SmartSearchFieldInput, "description" | "name" | "type">
-// 			>,
-// 		) => {
-// 			set((state) => ({
-// 				groups: state.groups.map((group) =>
-// 					group.id === groupId
-// 						? {
-// 								...group,
-// 								fields: group.fields.map((field) =>
-// 									field.id === fieldId ? { ...field, ...updates } : field,
-// 								),
-// 							}
-// 						: group,
-// 				),
-// 			}));
-// 		},
-// 		saveSchema: async (groups: SmartSearchGroupInput) => {
-// 			console.log("Received group with this schema", groups);
-// 		},
-// 	}));
 
 type GroupErrorKey = "name" | "description";
 type FieldErrorKey = "name" | "description" | "type";

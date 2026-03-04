@@ -69,6 +69,8 @@ interface ComponentDataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
 	data: TData[];
 	enablePagination?: boolean;
+	cursorBasedPagination?: boolean;
+	cursorConfig?: CursorPaginationConfig | null;
 	enableSearch?: boolean;
 	enableSorting?: boolean;
 	enableSelect?: boolean;
@@ -78,6 +80,16 @@ interface ComponentDataTableProps<TData, TValue> {
 	pageSizeOptions?: number[];
 	className?: string;
 	size?: "sm" | "md" | "lg";
+}
+
+interface CursorPaginationConfig {
+	hasNext: boolean;
+	hasPrevious: boolean;
+	onNext: () => void;
+	onPrevious: () => void;
+	onPageSizeChange?: (pageSize: number) => void;
+	isLoading?: boolean;
+	count?: number;
 }
 
 export function DataTableColumnHeader<TData, TValue>({
@@ -159,12 +171,34 @@ export function DataTablePagination<TData>({
 	enableSelect,
 	pageSize,
 	pageSizeOptions,
+	cursorConfig = null,
+	cursorBased = false,
 }: {
 	table: DataTablePaginationProps<TData>["table"];
 	enableSelect: boolean;
 	pageSize: number;
 	pageSizeOptions: number[];
+	cursorBased?: boolean;
+	cursorConfig?: CursorPaginationConfig | null;
 }) {
+	const canGoPrevious = cursorBased
+		? (cursorConfig?.hasPrevious ?? false)
+		: table.getCanPreviousPage();
+	const canGoNext = cursorBased
+		? (cursorConfig?.hasNext ?? false)
+		: table.getCanNextPage();
+	const isLoading = cursorBased ? (cursorConfig?.isLoading ?? false) : false;
+	const handlePageSizeChange = (value: string) => {
+		console.log(`Printing value ${value}`);
+		const newSize = Number(value);
+		console.log(`printing newSize ${newSize}`);
+		if (cursorBased && cursorConfig?.onPageSizeChange) {
+			cursorConfig.onPageSizeChange(newSize);
+		} else {
+			table.setPageSize(newSize);
+		}
+	};
+
 	return (
 		<div className="flex items-center justify-between px-2 shrink-0">
 			{enableSelect && (
@@ -178,9 +212,7 @@ export function DataTablePagination<TData>({
 					<p className="text-sm font-medium">Rows per page</p>
 					<Select
 						value={`${table.getState().pagination.pageSize}`}
-						onValueChange={(value) => {
-							table.setPageSize(Number(value));
-						}}
+						onValueChange={handlePageSizeChange}
 					>
 						<SelectTrigger className="h-8 w-[70px]">
 							<SelectValue placeholder={table.getState().pagination.pageSize} />
@@ -197,26 +229,42 @@ export function DataTablePagination<TData>({
 			</div>
 			<div className="flex">
 				<div className="flex w-[100px] items-center justify-center text-sm font-medium">
-					Page {table.getState().pagination.pageIndex + 1} of{" "}
-					{table.getPageCount()}
+					{cursorBased ? (
+						<span>
+							{cursorConfig?.count ?? table.getRowModel().rows.length} items
+						</span>
+					) : (
+						<span>
+							Page {table.getState().pagination.pageIndex + 1} of{" "}
+							{table.getPageCount()}
+						</span>
+					)}
 				</div>
 				<div className="flex items-center space-x-2">
-					<Button
-						variant="outline"
-						size="icon"
-						className="hidden size-8 lg:flex"
-						onClick={() => table.setPageIndex(0)}
-						disabled={!table.getCanPreviousPage()}
-					>
-						<span className="sr-only">Go to first page</span>
-						<ChevronsLeft />
-					</Button>
+					{!cursorBased && (
+						<Button
+							variant={"outline"}
+							size={"icon"}
+							className="hidden size-8 lg:flex"
+							onClick={() => table.setPageIndex(0)}
+							disabled={!canGoPrevious || isLoading}
+						>
+							<span className="sr-only">Go to first page</span>
+							<ChevronsLeft className="size-4" />
+						</Button>
+					)}
 					<Button
 						variant="outline"
 						size="icon"
 						className="size-8"
-						onClick={() => table.previousPage()}
-						disabled={!table.getCanPreviousPage()}
+						onClick={() => {
+							if (cursorBased && cursorConfig) {
+								cursorConfig.onPrevious();
+							} else {
+								table.previousPage();
+							}
+						}}
+						disabled={!canGoPrevious || isLoading}
 					>
 						<span className="sr-only">Go to previous page</span>
 						<ChevronLeft />
@@ -225,22 +273,31 @@ export function DataTablePagination<TData>({
 						variant="outline"
 						size="icon"
 						className="size-8"
-						onClick={() => table.nextPage()}
-						disabled={!table.getCanNextPage()}
+						onClick={() => {
+							if (cursorBased && cursorConfig) {
+								cursorConfig.onNext();
+							} else {
+								table.nextPage();
+							}
+						}}
+						disabled={!canGoNext || isLoading}
 					>
 						<span className="sr-only">Go to next page</span>
 						<ChevronRight />
 					</Button>
-					<Button
-						variant="outline"
-						size="icon"
-						className="hidden size-8 lg:flex"
-						onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-						disabled={!table.getCanNextPage()}
-					>
-						<span className="sr-only">Go to last page</span>
-						<ChevronsRight />
-					</Button>
+
+					{!cursorBased && (
+						<Button
+							variant="outline"
+							size="icon"
+							className="hidden size-8 lg:flex"
+							onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+							disabled={!canGoNext || isLoading}
+						>
+							<span className="sr-only">Go to last page</span>
+							<ChevronsRight />
+						</Button>
+					)}
 				</div>
 			</div>
 		</div>
@@ -251,6 +308,8 @@ export function ComponentDataTable<TData, TValue>({
 	columns,
 	data,
 	enablePagination = false,
+	cursorBasedPagination = false,
+	cursorConfig = null,
 	enableSearch = false,
 	enableSorting = false,
 	enableSelect = false,
@@ -275,6 +334,9 @@ export function ComponentDataTable<TData, TValue>({
 					pageSize: pageSize,
 				},
 			},
+		}),
+		...(cursorBasedPagination && {
+			manualPagination: true,
 		}),
 		...(enableSorting && {
 			getSortedRowModel: getSortedRowModel(),
@@ -306,7 +368,6 @@ export function ComponentDataTable<TData, TValue>({
 				/>
 			)}
 			<div className="flex-1 min-h-0 border rounded-md">
-				{/* <ScrollArea className="relative w-full flex-1 min-h-0 border rounded-md"> */}
 				<ScrollArea className="h-full">
 					<UITable noWrapper size={size}>
 						<TableHeader className="sticky top-0 bg-background z-10">
@@ -364,6 +425,8 @@ export function ComponentDataTable<TData, TValue>({
 					enableSelect={enableSelect}
 					pageSize={pageSize}
 					pageSizeOptions={pageSizeOptions}
+					cursorBased={cursorBasedPagination}
+					cursorConfig={cursorConfig}
 				/>
 			)}
 		</div>

@@ -1,5 +1,7 @@
 // import { BASE_URL } from "../config/constants";
 
+import { KnowledgeResponse, knowledgeType } from "../type/knowledge";
+
 interface ChunkResponseSchema {
 	id: string;
 	content: string;
@@ -7,6 +9,16 @@ interface ChunkResponseSchema {
 	file_name: string;
 	file_path: string;
 	created_at: string;
+}
+
+export interface retrieveKnowledgeResponseSchema {
+	success: boolean;
+	data: knowledgeType[];
+	pagination: {
+		limit: number;
+		has_next: boolean;
+		next_cursor: string;
+	};
 }
 
 export function fetchChunk(chunkId: string) {
@@ -87,6 +99,38 @@ export async function insertKnowledge(
 		return data;
 	} catch (error) {
 		console.error("Failed to upload files", error);
+		throw error;
+	}
+}
+
+export async function retrieveKnowledge(limit: number, cursor: string | null) {
+	const params = new URLSearchParams();
+	params.set("limit", String(limit));
+	if (cursor) {
+		params.set("cursor", String(cursor));
+	}
+	const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/documents/storage?${params}`;
+	try {
+		const response = await fetch(url, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+			},
+		});
+		const data: KnowledgeResponse = await response.json();
+
+		if (!response.ok) {
+			throw new Error(`Failed to retrieve knowledges: ${response.status}`);
+		}
+
+		if (!data.success) {
+			throw new Error("API returned unsuccessful response");
+		}
+
+		// const data: retrieveKnowledgeResponseSchema = await response.json();
+		return data;
+	} catch (error) {
+		console.error("Failed to retrieve knowledges: ", error);
 		throw error;
 	}
 }
