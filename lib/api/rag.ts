@@ -134,3 +134,32 @@ export async function retrieveKnowledge(limit: number, cursor: string | null) {
 		throw error;
 	}
 }
+
+export async function deleteKnowledge(
+	file: string,
+	index: string = "dummy_index",
+) {
+	const params = new URLSearchParams();
+	params.set("index_name", index);
+	const body = [`${file}`];
+	const encodedBody = JSON.stringify(body);
+	const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/documents/delete?${params}`;
+	try {
+		const response = await fetch(url, {
+			method: "DELETE",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: encodedBody,
+		});
+
+		if (!response.ok) {
+			throw new Error(`Failed to delete a knowledge: ${response.status}`);
+		}
+
+		return `${file} has been deleted.`;
+	} catch (err) {
+		console.error("Failed to delete knowledge", err);
+		throw err;
+	}
+}

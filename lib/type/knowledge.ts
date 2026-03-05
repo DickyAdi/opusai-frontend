@@ -139,6 +139,8 @@ export interface KnowledgeState {
 export interface KnowledgeActions {
 	// Core fetching
 	fetchKnowledges: (cursor?: string | null, append?: boolean) => Promise<void>;
+	deleteKnowledges: (file: string, index: string) => Promise<string>;
+	removeKnowledges: (file: string) => void;
 	refresh: () => Promise<void>;
 
 	// Navigation

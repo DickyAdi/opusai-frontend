@@ -214,6 +214,14 @@ export function useFetchNextKnowledges() {
 	return knowledgeStore((state) => state.fetchNext);
 }
 
+export function useDeleteKnowledges() {
+	return knowledgeStore((state) => state.deleteKnowledges);
+}
+
+export function useRemoveKnowledges() {
+	return knowledgeStore((state) => state.removeKnowledges);
+}
+
 export function useFetchPreviousKnowledges() {
 	return knowledgeStore((state) => state.fetchPrevious);
 }

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { KnowledgeStore } from "../type/knowledge";
-import { retrieveKnowledge } from "../api/rag";
+import { deleteKnowledge, retrieveKnowledge } from "../api/rag";
 
 const initialState = {
 	knowledges: [],
@@ -51,6 +51,39 @@ export const knowledgeStore = create<KnowledgeStore>((set, get) => ({
 			});
 			throw error;
 		}
+	},
+
+	deleteKnowledges: async (file: string, index: string = "dummy_index") => {
+		set({
+			isLoading: true,
+		});
+
+		try {
+			const response = await deleteKnowledge(file, index);
+			set({
+				isLoading: false,
+				isLoadingNext: false,
+				isLoadingPrevious: false,
+			});
+			return response;
+		} catch (err) {
+			set({
+				isLoading: false,
+				isLoadingNext: false,
+				isLoadingPrevious: false,
+			});
+			throw err instanceof Error
+				? err
+				: new Error("Failed to delete knowledge");
+		}
+	},
+
+	removeKnowledges: (storedName: string) => {
+		set((state) => ({
+			knowledges: state.knowledges.filter(
+				(row) => row.stored_name !== storedName,
+			),
+		}));
 	},
 
 	refresh: async () => {

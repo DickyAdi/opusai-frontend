@@ -5,6 +5,7 @@ import { formattedDateToDDMMYYYY } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { EraserIcon } from "lucide-react";
 import {
+	useDeleteKnowledges,
 	useFetchNextKnowledges,
 	useFetchPreviousKnowledges,
 	useKnowledgeHasNext,
@@ -15,9 +16,13 @@ import {
 	useKnowledgePageSize,
 	useKnowledgePagination,
 	useKnowledges,
+	useRemoveKnowledges,
 	useSetKnowledgePageSize,
 } from "@/hooks/useRag";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useAppendError } from "@/hooks/useError";
+import { useAppendSuccess } from "@/hooks/useSuccess";
+import { Spinner } from "../ui/spinner";
 
 export const KnowledgeManagementColumns: ColumnDef<knowledgeType>[] = [
 	{
@@ -49,39 +54,68 @@ export const KnowledgeManagementColumns: ColumnDef<knowledgeType>[] = [
 
 			return (
 				<div className="flex gap-2">
-					<Button
-						className="cursor-pointer"
-						variant={"destructive"}
-						size={"icon-sm"}
-						onClick={() => {
-							console.log(`Delete button clicked for ${data.stored_name}`);
-						}}
-					>
-						<EraserIcon className="h-4 w-4" />
-					</Button>
+					<KnowledgeTableDeleteButton file={data.stored_name} />
 				</div>
 			);
 		},
 	},
 ];
 
+function KnowledgeTableDeleteButton({ file }: { file: string }) {
+	const deleteKnowledges = useDeleteKnowledges();
+	const appendError = useAppendError();
+	const appendSuccess = useAppendSuccess();
+	const removeKnowledges = useRemoveKnowledges();
+	const [isDeleting, setIsDeleting] = useState(false);
+
+	const deleteHandler = useCallback(
+		async (file: string) => {
+			setIsDeleting(true);
+
+			try {
+				const isDeleted = await deleteKnowledges(file, "dummy_index");
+				removeKnowledges(file);
+				appendSuccess(isDeleted);
+			} catch (err) {
+				const errMsg =
+					err instanceof Error ? err.message : `Failed to delete ${file}`;
+				appendError(errMsg);
+			} finally {
+				setIsDeleting(false);
+			}
+		},
+		[deleteKnowledges, appendError, appendSuccess, removeKnowledges],
+	);
+
+	return (
+		<Button
+			variant={"destructive"}
+			size={"icon-sm"}
+			className="cursor-pointer"
+			disabled={isDeleting}
+			onClick={() => {
+				deleteHandler(file);
+			}}
+		>
+			{isDeleting ? (
+				<Spinner className="h-4 w-4" />
+			) : (
+				<EraserIcon className="h-4 w-4" />
+			)}
+		</Button>
+	);
+}
+
 export function KnowledgeManagementTable() {
 	const knowledges = useKnowledges();
 	const fetchNext = useFetchNextKnowledges();
 	const fetchPrevious = useFetchPreviousKnowledges();
 	const setPageSize = useSetKnowledgePageSize();
-	const pageSize = useKnowledgePageSize();
 	const isLoading = useKnowledgeLoading();
 	const hasNext = useKnowledgeHasNext();
 	const hasPrevious = useKnowledgeHasPrevious();
 	const isLoadingNext = useKnowledgeLoadingNext();
 	const isLoadingPrevious = useKnowledgeLoadingPrevious();
-	useEffect(() => {
-		console.log(`Printing knowledges ${knowledges.length}`);
-		console.log(`Printing hasNext ${hasNext}`);
-		console.log(`Printing hasPrevious ${hasPrevious}`);
-		console.log(`Printing pageSize ${pageSize}`);
-	}, [knowledges, hasNext, hasPrevious, pageSize]);
 	return (
 		<ComponentDataTable
 			size={"sm"}
@@ -93,15 +127,12 @@ export function KnowledgeManagementTable() {
 				hasNext: hasNext,
 				hasPrevious: hasPrevious,
 				onNext: () => {
-					console.log("fetch next running");
 					fetchNext();
 				},
 				onPrevious: () => {
-					console.log("fetch prev running");
 					fetchPrevious();
 				},
 				onPageSizeChange: (pageSize: number) => {
-					console.log("fetch page size change running");
 					setPageSize(pageSize);
 				},
 				isLoading: isLoading || isLoadingNext || isLoadingPrevious,
