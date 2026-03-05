@@ -104,6 +104,21 @@ export interface KnowledgeItem {
 	last_modified: string;
 }
 
+export type PageBasePaginationFormat = {
+	limit: number;
+	page: number;
+	total: number;
+	total_pages: number;
+	has_next: boolean;
+	has_prev: boolean;
+};
+
+export type SearchKnowledgeResponse = {
+	success: boolean;
+	data: knowledgeType[];
+	pagination: PageBasePaginationFormat;
+};
+
 export interface CursorPagination {
 	limit: number;
 	has_next: boolean;
@@ -117,38 +132,79 @@ export interface KnowledgeResponse {
 }
 
 // types/knowledgeStore.ts
+// export interface KnowledgeState {
+// 	// Data
+// 	knowledges: KnowledgeItem[];
+// 	pagination: CursorPagination | null;
+
+// 	// Loading states
+// 	isLoading: boolean;
+// 	isLoadingNext: boolean;
+// 	isLoadingPrevious: boolean;
+// 	error: string | null;
+
+// 	// Cursor history for navigation (stack)
+// 	cursorStack: (string | null)[];
+// 	currentCursor: string | null;
+
+// 	// Settings
+// 	pageSize: number;
+
+// 	paginationMode: "cursor" | "page";
+// 	currentPage: number;
+// 	totalPages: number;
+// }
+
 export interface KnowledgeState {
-	// Data
 	knowledges: KnowledgeItem[];
 	pagination: CursorPagination | null;
-
-	// Loading states
 	isLoading: boolean;
 	isLoadingNext: boolean;
 	isLoadingPrevious: boolean;
+	isSearching: boolean;
 	error: string | null;
-
-	// Cursor history for navigation (stack)
 	cursorStack: (string | null)[];
 	currentCursor: string | null;
-
-	// Settings
 	pageSize: number;
+	searchQuery: string;
+	paginationMode: "cursor" | "page";
+	currentPage: number;
+	totalPages: number;
+	pagesCache: Map<number, KnowledgeItem[]>;
 }
 
-export interface KnowledgeActions {
-	// Core fetching
-	fetchKnowledges: (cursor?: string | null, append?: boolean) => Promise<void>;
-	deleteKnowledges: (file: string, index: string) => Promise<string>;
-	removeKnowledges: (file: string) => void;
-	refresh: () => Promise<void>;
+// export interface KnowledgeActions {
+// 	// Core fetching
+// 	fetchKnowledges: (cursor?: string | null, append?: boolean) => Promise<void>;
+// 	deleteKnowledges: (file: string, index: string) => Promise<string>;
+// 	removeKnowledges: (file: string) => void;
+// 	refresh: () => Promise<void>;
 
-	// Navigation
+// 	// Navigation
+// 	fetchNext: () => Promise<void>;
+// 	fetchPrevious: () => Promise<void>;
+// 	goToFirst: () => Promise<void>;
+
+// 	// State management
+// 	setPageSize: (size: number) => void;
+// 	reset: () => void;
+// 	clearError: () => void;
+// }
+
+export interface KnowledgeActions {
+	fetchKnowledges: (params?: {
+		cursor?: string | null;
+		page?: number;
+		append?: boolean;
+	}) => Promise<void>;
+	searchKnowledges: (query: string) => Promise<void>;
+	clearSearch: () => Promise<void>;
+	deleteKnowledges: (file: string, index?: string) => Promise<any>;
+	removeKnowledges: (storedName: string) => void;
+	refresh: () => Promise<void>;
 	fetchNext: () => Promise<void>;
 	fetchPrevious: () => Promise<void>;
 	goToFirst: () => Promise<void>;
-
-	// State management
 	setPageSize: (size: number) => void;
 	reset: () => void;
 	clearError: () => void;

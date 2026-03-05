@@ -3,26 +3,30 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ComponentDataTable, DataTableColumnHeader } from "../ui/data-table";
 import { formattedDateToDDMMYYYY } from "@/lib/utils";
 import { Button } from "../ui/button";
-import { EraserIcon } from "lucide-react";
+import { EraserIcon, Eye } from "lucide-react";
 import {
 	useDeleteKnowledges,
 	useFetchNextKnowledges,
 	useFetchPreviousKnowledges,
+	useKnowledgeCurrentPage,
 	useKnowledgeHasNext,
 	useKnowledgeHasPrevious,
+	useKnowledgeIsSearching,
 	useKnowledgeLoading,
 	useKnowledgeLoadingNext,
 	useKnowledgeLoadingPrevious,
-	useKnowledgePageSize,
-	useKnowledgePagination,
+	useKnowledgePaginationMode,
 	useKnowledges,
+	useKnowledgeTotalPages,
 	useRemoveKnowledges,
+	useSearchKnowledges,
 	useSetKnowledgePageSize,
 } from "@/hooks/useRag";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useAppendError } from "@/hooks/useError";
 import { useAppendSuccess } from "@/hooks/useSuccess";
 import { Spinner } from "../ui/spinner";
+import { FileReferenceModal } from "../chat/files/file_reference";
 
 export const KnowledgeManagementColumns: ColumnDef<knowledgeType>[] = [
 	{
@@ -55,6 +59,7 @@ export const KnowledgeManagementColumns: ColumnDef<knowledgeType>[] = [
 			return (
 				<div className="flex gap-2">
 					<KnowledgeTableDeleteButton file={data.stored_name} />
+					<KnowledgeTableViewButton filename={data.stored_name} />
 				</div>
 			);
 		},
@@ -106,6 +111,29 @@ function KnowledgeTableDeleteButton({ file }: { file: string }) {
 	);
 }
 
+export function KnowledgeTableViewButton({ filename }: { filename: string }) {
+	const [openModal, setOpenModal] = useState<boolean>(false);
+
+	return (
+		<>
+			<Button
+				variant={"outline"}
+				size={"icon-sm"}
+				className="cursor-pointer"
+				onClick={() => setOpenModal(true)}
+			>
+				<Eye className="h-4 w-4" />
+			</Button>
+			<FileReferenceModal
+				onOpen={openModal}
+				setOnOpen={setOpenModal}
+				refName={filename}
+				refSourceName={filename}
+			/>
+		</>
+	);
+}
+
 export function KnowledgeManagementTable() {
 	const knowledges = useKnowledges();
 	const fetchNext = useFetchNextKnowledges();
@@ -116,27 +144,49 @@ export function KnowledgeManagementTable() {
 	const hasPrevious = useKnowledgeHasPrevious();
 	const isLoadingNext = useKnowledgeLoadingNext();
 	const isLoadingPrevious = useKnowledgeLoadingPrevious();
+	const currentPage = useKnowledgeCurrentPage();
+	const totalPages = useKnowledgeTotalPages();
+	const paginationMode = useKnowledgePaginationMode();
+	const isSearching = useKnowledgeIsSearching();
+	const searchKnowledges = useSearchKnowledges();
+	const isPageMode = paginationMode === "page";
 	return (
+		// <ComponentDataTable
+		// 	size={"sm"}
+		// 	data={knowledges}
+		// 	columns={KnowledgeManagementColumns}
+		// 	enablePagination={true}
+		// 	cursorBasedPagination={true}
+		// 	cursorConfig={{
+		// 		hasNext: hasNext,
+		// 		hasPrevious: hasPrevious,
+		// 		onNext: () => {
+		// 			fetchNext();
+		// 		},
+		// 		onPrevious: () => {
+		// 			fetchPrevious();
+		// 		},
+		// 		onPageSizeChange: (pageSize: number) => {
+		// 			setPageSize(pageSize);
+		// 		},
+		// 		isLoading: isLoading || isLoadingNext || isLoadingPrevious,
+		// 	}}
+		// />
 		<ComponentDataTable
-			size={"sm"}
+			size="sm"
 			data={knowledges}
 			columns={KnowledgeManagementColumns}
 			enablePagination={true}
-			cursorBasedPagination={true}
+			cursorBasedPagination={!isPageMode} // false for page mode
 			cursorConfig={{
-				hasNext: hasNext,
-				hasPrevious: hasPrevious,
-				onNext: () => {
-					fetchNext();
-				},
-				onPrevious: () => {
-					fetchPrevious();
-				},
-				onPageSizeChange: (pageSize: number) => {
-					setPageSize(pageSize);
-				},
-				isLoading: isLoading || isLoadingNext || isLoadingPrevious,
+				hasNext: isPageMode ? currentPage < totalPages : hasNext,
+				hasPrevious: isPageMode ? currentPage > 1 : hasPrevious,
+				onNext: fetchNext,
+				onPrevious: fetchPrevious,
 			}}
+			serverSideSearch={true}
+			onSearch={searchKnowledges}
+			isSearching={isSearching}
 		/>
 	);
 }

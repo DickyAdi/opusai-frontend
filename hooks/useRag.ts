@@ -294,14 +294,30 @@ export function useKnowledgeHasPrevious() {
 	return knowledgeStore((state) => state.cursorStack.length > 0);
 }
 
-// For the DataTable pagination component (combines necessary states)
-// export function useKnowledgePaginationState() {
-// 	return knowledgeStore((state) => ({
-// 		hasNext: state.pagination?.has_next ?? false,
-// 		hasPrevious: state.cursorStack.length > 0,
-// 		isLoadingNext: state.isLoadingNext,
-// 		isLoadingPrevious: state.isLoadingPrevious,
-// 		pageSize: state.pageSize,
-// 		totalCount: state.knowledges.length,
-// 	}));
-// }
+export function useKnowledgePaginationMode() {
+	return knowledgeStore((state) => state.paginationMode);
+}
+
+export function useKnowledgeCurrentPage() {
+	return knowledgeStore((state) => state.currentPage);
+}
+
+export function useKnowledgeTotalPages() {
+	return knowledgeStore((state) => state.totalPages);
+}
+
+export function useKnowledgeSearchQuery() {
+	return knowledgeStore((state) => state.searchQuery);
+}
+
+export function useKnowledgeIsSearching() {
+	return knowledgeStore((state) => state.isSearching);
+}
+
+export function useSearchKnowledges() {
+	return knowledgeStore((state) => state.searchKnowledges);
+}
+
+export function useClearSearch() {
+	return knowledgeStore((state) => state.clearSearch);
+}

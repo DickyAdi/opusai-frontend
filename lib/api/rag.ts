@@ -1,6 +1,10 @@
 // import { BASE_URL } from "../config/constants";
 
-import { KnowledgeResponse, knowledgeType } from "../type/knowledge";
+import {
+	KnowledgeResponse,
+	knowledgeType,
+	SearchKnowledgeResponse,
+} from "../type/knowledge";
 
 interface ChunkResponseSchema {
 	id: string;
@@ -160,6 +164,37 @@ export async function deleteKnowledge(
 		return `${file} has been deleted.`;
 	} catch (err) {
 		console.error("Failed to delete knowledge", err);
+		throw err;
+	}
+}
+
+export async function searchKnowledgeAPI(params: {
+	q: string;
+	page: number;
+	limit: number;
+}) {
+	const url = new URL(
+		`${process.env.NEXT_PUBLIC_BASE_URL}/api/documents/storage/search`,
+	);
+	url.searchParams.set("q", params.q);
+	url.searchParams.set("page", String(params.page));
+	url.searchParams.set("limit", String(params.limit));
+
+	const response = await fetch(url);
+	try {
+		if (!response.ok) {
+			throw new Error(`Unable to search ${response.status}`);
+		}
+
+		const data = (await response.json()) as SearchKnowledgeResponse;
+
+		if (!data?.success) {
+			throw new Error("Could not perform search");
+		}
+
+		return data;
+	} catch (err) {
+		console.error("Failed to search");
 		throw err;
 	}
 }

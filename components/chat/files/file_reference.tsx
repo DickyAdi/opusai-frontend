@@ -82,7 +82,7 @@ const FileReference = memo(function FileReference({
 	);
 });
 
-function FileReferenceModal({
+export function FileReferenceModal({
 	onOpen,
 	setOnOpen,
 	refName,

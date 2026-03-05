@@ -42,7 +42,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "./input";
 import { ScrollArea } from "./scroll-area";
 import {
@@ -53,6 +53,8 @@ import {
 	TableRow,
 	Table as UITable,
 } from "./table";
+import useDebounce from "@/hooks/useDebounce";
+import { Spinner } from "./spinner";
 
 interface DataTableColumnHeaderProps<TData, TValue>
 	extends React.HTMLAttributes<HTMLDivElement> {
@@ -63,6 +65,18 @@ interface DataTableColumnHeaderProps<TData, TValue>
 
 interface DataTablePaginationProps<TData> {
 	table: Table<TData>;
+}
+
+interface DataTableSearchInputProps<TData> {
+	placeholder: string;
+	// Client-side only (optional for server-side)
+	table?: Table<TData>;
+	searchColumn?: string;
+	// Server-side only (optional for client-side)
+	serverSideSearch?: boolean;
+	searchQuery?: string;
+	setSearchQuery?: (query: string) => void;
+	isSearching?: boolean;
 }
 
 interface ComponentDataTableProps<TData, TValue> {
@@ -141,27 +155,96 @@ export function DataTableColumnHeader<TData, TValue>({
 	);
 }
 
+// export function DataTableSearchInput<TData>({
+// 	table,
+// 	placeholder,
+// 	searchColumn,
+// }: {
+// 	table: Table<TData>;
+// 	placeholder: string;
+// 	searchColumn: string;
+// }) {
+// 	return (
+// 		<div className="flex items-center shrink-0">
+// 			<Input
+// 				placeholder={placeholder}
+// 				value={
+// 					(table.getColumn(searchColumn)?.getFilterValue() as string) ?? ""
+// 				}
+// 				onChange={(event) =>
+// 					table.getColumn(searchColumn)?.setFilterValue(event.target.value)
+// 				}
+// 				className="max-w-sm"
+// 			/>
+// 		</div>
+// 	);
+// }
+
 export function DataTableSearchInput<TData>({
 	table,
 	placeholder,
 	searchColumn,
-}: {
-	table: Table<TData>;
-	placeholder: string;
-	searchColumn: string;
-}) {
+	serverSideSearch = false,
+	searchQuery,
+	setSearchQuery,
+	isSearching,
+}: DataTableSearchInputProps<TData>) {
+	const id = crypto.randomUUID();
+
+	// Client-side: use TanStack Table's built-in filtering
+	if (!serverSideSearch) {
+		// Safety check for required client-side props
+		if (!table) {
+			console.error(
+				"DataTableSearchInput: 'table' is required for client-side search",
+			);
+			return null;
+		}
+
+		if (!searchColumn) {
+			console.error(
+				"DataTableSearchInput: 'searchColumn' is required for client-side search",
+			);
+			return null;
+		}
+
+		return (
+			<div className="flex items-center shrink-0">
+				<Input
+					id={`client-search-${id}`}
+					placeholder={placeholder}
+					value={
+						(table.getColumn(searchColumn)?.getFilterValue() as string) ?? ""
+					}
+					onChange={(event) =>
+						table.getColumn(searchColumn)?.setFilterValue(event.target.value)
+					}
+					className="max-w-sm"
+				/>
+			</div>
+		);
+	}
+
+	// Server-side: controlled input with loading state
+	if (!setSearchQuery) {
+		console.warn(
+			"DataTableSearchInput: 'setSearchQuery' is required for server-side search",
+		);
+		return null;
+	}
+
 	return (
-		<div className="flex items-center shrink-0">
+		<div className="flex items-center shrink-0 gap-2">
 			<Input
+				id={`server-search-${id}`}
 				placeholder={placeholder}
-				value={
-					(table.getColumn(searchColumn)?.getFilterValue() as string) ?? ""
-				}
-				onChange={(event) =>
-					table.getColumn(searchColumn)?.setFilterValue(event.target.value)
-				}
+				value={searchQuery ?? ""}
+				onChange={(event) => setSearchQuery(event.target.value)}
 				className="max-w-sm"
 			/>
+			{isSearching && (
+				<Spinner className="h-4 w-4 text-muted-foreground animate-spin" />
+			)}
 		</div>
 	);
 }
@@ -304,6 +387,135 @@ export function DataTablePagination<TData>({
 	);
 }
 
+// export function ComponentDataTable<TData, TValue>({
+// 	columns,
+// 	data,
+// 	enablePagination = false,
+// 	cursorBasedPagination = false,
+// 	cursorConfig = null,
+// 	enableSearch = false,
+// 	enableSorting = false,
+// 	enableSelect = false,
+// 	searchColumn = "",
+// 	searchPlaceholder = "",
+// 	pageSize = 10,
+// 	pageSizeOptions = [10, 20, 30, 40, 50],
+// 	className = "",
+// 	size = "md",
+// }: ComponentDataTableProps<TData, TValue>) {
+// 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+// 	const [sorting, setIsSorting] = useState<SortingState>([]);
+// 	const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+// 	const table = useReactTable({
+// 		data,
+// 		columns,
+// 		getCoreRowModel: getCoreRowModel(),
+// 		...(enablePagination && {
+// 			getPaginationRowModel: getPaginationRowModel(),
+// 			initialState: {
+// 				pagination: {
+// 					pageSize: pageSize,
+// 				},
+// 			},
+// 		}),
+// 		...(cursorBasedPagination && {
+// 			manualPagination: true,
+// 		}),
+// 		...(enableSorting && {
+// 			getSortedRowModel: getSortedRowModel(),
+// 			onColumnFiltersChange: setColumnFilters,
+// 			onSortingChange: setIsSorting,
+// 		}),
+// 		...(enableSearch && {
+// 			getFilteredRowModel: getFilteredRowModel(),
+// 			onColumnFiltersChange: setColumnFilters,
+// 		}),
+// 		...(enableSelect && {
+// 			onRowSelectionChange: setRowSelection,
+// 		}),
+// 		state: {
+// 			...(enableSorting && { sorting }),
+// 			...(enableSearch && { columnFilters }),
+// 			...(enableSelect && { rowSelection }),
+// 		},
+// 	});
+
+// 	return (
+// 		// <div className={cn("flex flex-col gap-2 h-full", className)}>
+// 		<div className={cn("flex flex-col gap-2 h-full min-h-0", className)}>
+// 			{enableSearch && (
+// 				<DataTableSearchInput
+// 					table={table}
+// 					searchColumn={searchColumn}
+// 					placeholder={searchPlaceholder}
+// 				/>
+// 			)}
+// 			<div className="flex-1 min-h-0 border rounded-md">
+// 				<ScrollArea className="h-full">
+// 					<UITable noWrapper size={size}>
+// 						<TableHeader className="sticky top-0 bg-background z-10">
+// 							{table.getHeaderGroups().map((headerGroup) => (
+// 								<TableRow key={headerGroup.id}>
+// 									{headerGroup.headers.map((header) => {
+// 										return (
+// 											<TableHead key={header.id}>
+// 												{header.isPlaceholder
+// 													? null
+// 													: flexRender(
+// 															header.column.columnDef.header,
+// 															header.getContext(),
+// 														)}
+// 											</TableHead>
+// 										);
+// 									})}
+// 								</TableRow>
+// 							))}
+// 						</TableHeader>
+// 						<TableBody>
+// 							{table.getRowModel().rows?.length ? (
+// 								table.getRowModel().rows.map((row) => (
+// 									<TableRow
+// 										key={row.id}
+// 										data-state={row.getIsSelected() && "selected"}
+// 									>
+// 										{row.getVisibleCells().map((cell) => (
+// 											<TableCell key={cell.id}>
+// 												{flexRender(
+// 													cell.column.columnDef.cell,
+// 													cell.getContext(),
+// 												)}
+// 											</TableCell>
+// 										))}
+// 									</TableRow>
+// 								))
+// 							) : (
+// 								<TableRow>
+// 									<TableCell
+// 										colSpan={columns.length}
+// 										className="h-24 text-center"
+// 									>
+// 										No results.
+// 									</TableCell>
+// 								</TableRow>
+// 							)}
+// 						</TableBody>
+// 					</UITable>
+// 				</ScrollArea>
+// 			</div>
+// 			{enablePagination && (
+// 				<DataTablePagination
+// 					table={table}
+// 					enableSelect={enableSelect}
+// 					pageSize={pageSize}
+// 					pageSizeOptions={pageSizeOptions}
+// 					cursorBased={cursorBasedPagination}
+// 					cursorConfig={cursorConfig}
+// 				/>
+// 			)}
+// 		</div>
+// 	);
+// }
+
 export function ComponentDataTable<TData, TValue>({
 	columns,
 	data,
@@ -311,6 +523,9 @@ export function ComponentDataTable<TData, TValue>({
 	cursorBasedPagination = false,
 	cursorConfig = null,
 	enableSearch = false,
+	serverSideSearch = false, // NEW: Toggle between client/server search
+	onSearch, // NEW: Callback for server-side search
+	isSearching = false, // NEW: Loading state for server search
 	enableSorting = false,
 	enableSelect = false,
 	searchColumn = "",
@@ -319,52 +534,73 @@ export function ComponentDataTable<TData, TValue>({
 	pageSizeOptions = [10, 20, 30, 40, 50],
 	className = "",
 	size = "md",
-}: ComponentDataTableProps<TData, TValue>) {
+}: ComponentDataTableProps<TData, TValue> & {
+	serverSideSearch?: boolean;
+	onSearch?: (query: string) => void;
+	isSearching?: boolean;
+}) {
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [sorting, setIsSorting] = useState<SortingState>([]);
 	const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+	// NEW: Internal search state for server-side mode
+	const [searchQuery, setSearchQuery] = useState("");
+	const debouncedSearch = useDebounce(searchQuery, 300);
+
+	// NEW: Trigger server search when debounced value changes
+	useEffect(() => {
+		if (serverSideSearch && onSearch) {
+			onSearch(debouncedSearch);
+		}
+	}, [debouncedSearch, serverSideSearch, onSearch]);
+
 	const table = useReactTable({
 		data,
 		columns,
 		getCoreRowModel: getCoreRowModel(),
-		...(enablePagination && {
-			getPaginationRowModel: getPaginationRowModel(),
-			initialState: {
-				pagination: {
-					pageSize: pageSize,
+		...(enablePagination &&
+			!cursorBasedPagination && {
+				getPaginationRowModel: getPaginationRowModel(),
+				initialState: {
+					pagination: {
+						pageSize: pageSize,
+					},
 				},
-			},
-		}),
+			}),
 		...(cursorBasedPagination && {
 			manualPagination: true,
 		}),
 		...(enableSorting && {
 			getSortedRowModel: getSortedRowModel(),
-			onColumnFiltersChange: setColumnFilters,
 			onSortingChange: setIsSorting,
 		}),
-		...(enableSearch && {
-			getFilteredRowModel: getFilteredRowModel(),
-			onColumnFiltersChange: setColumnFilters,
-		}),
+		// MODIFIED: Only enable client-side filtering if NOT server-side
+		...(enableSearch &&
+			!serverSideSearch && {
+				getFilteredRowModel: getFilteredRowModel(),
+				onColumnFiltersChange: setColumnFilters,
+			}),
 		...(enableSelect && {
 			onRowSelectionChange: setRowSelection,
 		}),
 		state: {
 			...(enableSorting && { sorting }),
-			...(enableSearch && { columnFilters }),
+			...(enableSearch && !serverSideSearch && { columnFilters }),
 			...(enableSelect && { rowSelection }),
 		},
 	});
 
 	return (
-		// <div className={cn("flex flex-col gap-2 h-full", className)}>
 		<div className={cn("flex flex-col gap-2 h-full min-h-0", className)}>
 			{enableSearch && (
 				<DataTableSearchInput
 					table={table}
 					searchColumn={searchColumn}
 					placeholder={searchPlaceholder}
+					serverSideSearch={serverSideSearch}
+					searchQuery={searchQuery}
+					setSearchQuery={setSearchQuery}
+					isSearching={isSearching}
 				/>
 			)}
 			<div className="flex-1 min-h-0 border rounded-md">
