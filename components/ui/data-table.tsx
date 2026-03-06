@@ -89,7 +89,7 @@ interface ComponentDataTableProps<TData, TValue> {
 	enableSorting?: boolean;
 	enableSelect?: boolean;
 	searchColumn?: string;
-	searchPlaceholder?: "";
+	searchPlaceholder?: string;
 	pageSize?: number;
 	pageSizeOptions?: number[];
 	className?: string;

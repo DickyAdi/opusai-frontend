@@ -32,13 +32,13 @@ export const KnowledgeManagementColumns: ColumnDef<knowledgeType>[] = [
 	{
 		accessorKey: "name",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Name" />
+			<DataTableColumnHeader column={column} title="Filename" />
 		),
 	},
 	{
 		accessorKey: "stored_name",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Filename" />
+			<DataTableColumnHeader column={column} title="File ID" />
 		),
 	},
 	{
@@ -177,13 +177,15 @@ export function KnowledgeManagementTable() {
 			data={knowledges}
 			columns={KnowledgeManagementColumns}
 			enablePagination={true}
-			cursorBasedPagination={!isPageMode} // false for page mode
+			cursorBasedPagination={true} // false for page mode
 			cursorConfig={{
 				hasNext: isPageMode ? currentPage < totalPages : hasNext,
 				hasPrevious: isPageMode ? currentPage > 1 : hasPrevious,
 				onNext: fetchNext,
 				onPrevious: fetchPrevious,
 			}}
+			searchPlaceholder="Search file here"
+			enableSearch={true}
 			serverSideSearch={true}
 			onSearch={searchKnowledges}
 			isSearching={isSearching}
