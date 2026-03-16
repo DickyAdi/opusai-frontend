@@ -534,10 +534,12 @@ export function ComponentDataTable<TData, TValue>({
 	pageSizeOptions = [10, 20, 30, 40, 50],
 	className = "",
 	size = "md",
+	scrollable = "vertical", // "vertical" | "both" | "none"
 }: ComponentDataTableProps<TData, TValue> & {
 	serverSideSearch?: boolean;
 	onSearch?: (query: string) => void;
 	isSearching?: boolean;
+	scrollable?: "vertical" | "both" | "none";
 }) {
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [sorting, setIsSorting] = useState<SortingState>([]);
@@ -603,8 +605,64 @@ export function ComponentDataTable<TData, TValue>({
 					isSearching={isSearching}
 				/>
 			)}
-			<div className="flex-1 min-h-0 border rounded-md">
-				<ScrollArea className="h-full">
+			<div
+				className={cn(
+					"flex-1 min-h-0 border rounded-md",
+					scrollable === "both" && "overflow-auto sidebar-scroll",
+				)}
+			>
+				{scrollable === "vertical" ? (
+					<ScrollArea className="h-full">
+						<UITable noWrapper size={size}>
+							<TableHeader className="sticky top-0 bg-background z-10">
+								{table.getHeaderGroups().map((headerGroup) => (
+									<TableRow key={headerGroup.id}>
+										{headerGroup.headers.map((header) => {
+											return (
+												<TableHead key={header.id}>
+													{header.isPlaceholder
+														? null
+														: flexRender(
+																header.column.columnDef.header,
+																header.getContext(),
+															)}
+												</TableHead>
+											);
+										})}
+									</TableRow>
+								))}
+							</TableHeader>
+							<TableBody>
+								{table.getRowModel().rows?.length ? (
+									table.getRowModel().rows.map((row) => (
+										<TableRow
+											key={row.id}
+											data-state={row.getIsSelected() && "selected"}
+										>
+											{row.getVisibleCells().map((cell) => (
+												<TableCell key={cell.id}>
+													{flexRender(
+														cell.column.columnDef.cell,
+														cell.getContext(),
+													)}
+												</TableCell>
+											))}
+										</TableRow>
+									))
+								) : (
+									<TableRow>
+										<TableCell
+											colSpan={columns.length}
+											className="h-24 text-center"
+										>
+											No results.
+										</TableCell>
+									</TableRow>
+								)}
+							</TableBody>
+						</UITable>
+					</ScrollArea>
+				) : scrollable === "both" ? (
 					<UITable noWrapper size={size}>
 						<TableHeader className="sticky top-0 bg-background z-10">
 							{table.getHeaderGroups().map((headerGroup) => (
@@ -653,7 +711,56 @@ export function ComponentDataTable<TData, TValue>({
 							)}
 						</TableBody>
 					</UITable>
-				</ScrollArea>
+				) : (
+					<UITable size={size}>
+						<TableHeader>
+							{table.getHeaderGroups().map((headerGroup) => (
+								<TableRow key={headerGroup.id}>
+									{headerGroup.headers.map((header) => {
+										return (
+											<TableHead key={header.id}>
+												{header.isPlaceholder
+													? null
+													: flexRender(
+															header.column.columnDef.header,
+															header.getContext(),
+														)}
+											</TableHead>
+										);
+									})}
+								</TableRow>
+							))}
+						</TableHeader>
+						<TableBody>
+							{table.getRowModel().rows?.length ? (
+								table.getRowModel().rows.map((row) => (
+									<TableRow
+										key={row.id}
+										data-state={row.getIsSelected() && "selected"}
+									>
+										{row.getVisibleCells().map((cell) => (
+											<TableCell key={cell.id}>
+												{flexRender(
+													cell.column.columnDef.cell,
+													cell.getContext(),
+												)}
+											</TableCell>
+										))}
+									</TableRow>
+								))
+							) : (
+								<TableRow>
+									<TableCell
+										colSpan={columns.length}
+										className="h-24 text-center"
+									>
+										No results.
+									</TableCell>
+								</TableRow>
+							)}
+						</TableBody>
+					</UITable>
+				)}
 			</div>
 			{enablePagination && (
 				<DataTablePagination

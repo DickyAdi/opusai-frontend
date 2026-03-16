@@ -1,12 +1,18 @@
 import { fetchSmartSearchSchema } from "@/lib/api/smartsearch";
-import type { FetchSmartSearchSchemaResponse } from "@/lib/type/smartsearch";
-import { useEffect, useState } from "react";
+import type {
+	FetchSmartSearchSchemaResponse,
+	SmartSearchFieldInputNoId,
+	SmartSearchFieldInput,
+} from "@/lib/type/smartsearch";
+import { useEffect, useState, useCallback } from "react";
 import { useAppendError } from "./useError";
 import {
 	smartSearchSchemaCreateStore,
 	smartSearchSchemaStore,
 	smartSearchStore,
+	smartSearchSchemaManageStore,
 } from "@/lib/store/smartsearch_store";
+import { useAppendSuccess } from "./useSuccess";
 
 export function useFetchSchema() {
 	const [schemas, setSchemas] = useState<FetchSmartSearchSchemaResponse>({
@@ -152,4 +158,117 @@ export function useSmartSearchSchemaGetIsSaving() {
 
 export function useSmartSearchSchemaSetIsSaving() {
 	return smartSearchSchemaCreateStore((state) => state.setIsSaving);
+}
+
+// === Hooks for managing existing schemas ===
+
+export function useAddFieldsToGroup() {
+	const addFields = smartSearchSchemaManageStore((state) => state.addFieldsToGroup);
+	const isAddingField = smartSearchSchemaManageStore((state) => state.isAddingField);
+	const appendSuccess = useAppendSuccess();
+	const appendError = useAppendError();
+	const loadSchemas = useLoadSmartSearchSchemas();
+
+	return useCallback(
+		async (groupId: string, fields: SmartSearchFieldInputNoId[]) => {
+			try {
+				const message = await addFields(groupId, fields);
+				appendSuccess(message);
+				await loadSchemas();
+				return true;
+			} catch (err) {
+				appendError(err instanceof Error ? err.message : "Failed to add fields");
+				return false;
+			}
+		},
+		[addFields, appendSuccess, appendError, loadSchemas],
+	);
+}
+
+export function useDeleteGroupSchema() {
+	const deleteGroup = smartSearchSchemaManageStore((state) => state.deleteGroup);
+	const isDeletingGroup = smartSearchSchemaManageStore((state) => state.isDeletingGroup);
+	const appendSuccess = useAppendSuccess();
+	const appendError = useAppendError();
+	const loadSchemas = useLoadSmartSearchSchemas();
+
+	return useCallback(
+		async (groupId: string) => {
+			try {
+				const message = await deleteGroup(groupId);
+				appendSuccess(message);
+				await loadSchemas();
+				return true;
+			} catch (err) {
+				appendError(err instanceof Error ? err.message : "Failed to delete group");
+				return false;
+			}
+		},
+		[deleteGroup, appendSuccess, appendError, loadSchemas],
+	);
+}
+
+export function useEditFieldSchema() {
+	const editField = smartSearchSchemaManageStore((state) => state.editField);
+	const isEditingField = smartSearchSchemaManageStore((state) => state.isEditingField);
+	const appendSuccess = useAppendSuccess();
+	const appendError = useAppendError();
+	const loadSchemas = useLoadSmartSearchSchemas();
+
+	return useCallback(
+		async (
+			fieldId: string,
+			updates: Partial<Pick<SmartSearchFieldInput, "name" | "description" | "type">>,
+		) => {
+			try {
+				const message = await editField(fieldId, updates);
+				appendSuccess(message);
+				await loadSchemas();
+				return true;
+			} catch (err) {
+				appendError(err instanceof Error ? err.message : "Failed to edit field");
+				return false;
+			}
+		},
+		[editField, appendSuccess, appendError, loadSchemas],
+	);
+}
+
+export function useDeleteFieldSchema() {
+	const deleteField = smartSearchSchemaManageStore((state) => state.deleteField);
+	const isDeletingField = smartSearchSchemaManageStore((state) => state.isDeletingField);
+	const appendSuccess = useAppendSuccess();
+	const appendError = useAppendError();
+	const loadSchemas = useLoadSmartSearchSchemas();
+
+	return useCallback(
+		async (fieldId: string) => {
+			try {
+				const message = await deleteField(fieldId);
+				appendSuccess(message);
+				await loadSchemas();
+				return true;
+			} catch (err) {
+				appendError(err instanceof Error ? err.message : "Failed to delete field");
+				return false;
+			}
+		},
+		[deleteField, appendSuccess, appendError, loadSchemas],
+	);
+}
+
+export function useIsAddingField() {
+	return smartSearchSchemaManageStore((state) => state.isAddingField);
+}
+
+export function useIsDeletingGroup() {
+	return smartSearchSchemaManageStore((state) => state.isDeletingGroup);
+}
+
+export function useIsEditingField() {
+	return smartSearchSchemaManageStore((state) => state.isEditingField);
+}
+
+export function useIsDeletingField() {
+	return smartSearchSchemaManageStore((state) => state.isDeletingField);
 }
