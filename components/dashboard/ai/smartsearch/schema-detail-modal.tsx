@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, ChangeEvent } from "react";
+import { useState, useCallback, ChangeEvent, useMemo } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -9,17 +9,6 @@ import {
 	DialogDescription,
 	DialogFooter,
 } from "@/components/ui/dialog";
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,15 +18,15 @@ import {
 } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import {
-	Combobox,
-	ComboboxContent,
-	ComboboxInput,
-	ComboboxItem,
-	ComboboxList,
-} from "@/components/ui/combobox";
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { ComponentDataTable } from "@/components/ui/data-table";
-
-import type { ColumnDef } from "@tanstack/react-table";
+import { getFieldColumns } from "./detail-datatable/columns";
+import { GroupDeleteAlert } from "./detail-datatable/group-delete-alert";
 import {
 	useAddFieldsToGroup,
 	useDeleteGroupSchema,
@@ -55,7 +44,7 @@ import type {
 } from "@/lib/type/smartsearch";
 import { FieldTypeValue } from "@/lib/type/smartsearch";
 import { FieldSchemaValidation } from "@/lib/validator/smartsearch-schema/create";
-import { PlusIcon, PencilIcon, TrashIcon, XIcon, SaveIcon } from "lucide-react";
+import { PlusIcon, XIcon, SaveIcon } from "lucide-react";
 import { formattedDateToDDMMYYYY } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -239,78 +228,22 @@ export function SchemaDetailModal({
 		[],
 	);
 
-	const fieldColumns: ColumnDef<SmartSearchFieldSchema>[] = [
-		{
-			accessorKey: "name",
-			header: "Name",
-		},
-		{
-			accessorKey: "type",
-			header: "Type",
-		},
-		{
-			header: "Description",
-			cell: ({ row }) => (
-				<span className="truncate max-w-xs block">
-					{row.original.description}
-				</span>
-			),
-		},
-		{
-			id: "actions",
-			header: "Actions",
-			cell: ({ row }) => {
-				const field = row.original;
-				return (
-					<div className="flex gap-2">
-						<Button
-							variant="ghost"
-							size="icon-sm"
-							onClick={() => startEditingField(field)}
-							disabled={isLoading || editingField !== null}
-						>
-							<PencilIcon className="h-4 w-4" />
-						</Button>
-						<AlertDialog>
-							<AlertDialogTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon-sm"
-									disabled={isLoading || editingField !== null}
-								>
-									<TrashIcon className="h-4 w-4" />
-								</Button>
-							</AlertDialogTrigger>
-							<AlertDialogContent>
-								<AlertDialogHeader>
-									<AlertDialogTitle>Delete Field</AlertDialogTitle>
-									<AlertDialogDescription>
-										Are you sure you want to delete the field &quot;
-										{field.name}&quot;? This action cannot be undone.
-									</AlertDialogDescription>
-								</AlertDialogHeader>
-								<AlertDialogFooter>
-									<AlertDialogCancel>Cancel</AlertDialogCancel>
-									<AlertDialogAction
-										onClick={() => handleDeleteField(field.id)}
-										className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-									>
-										Delete
-									</AlertDialogAction>
-								</AlertDialogFooter>
-							</AlertDialogContent>
-						</AlertDialog>
-					</div>
-				);
-			},
-		},
-	];
+	const columns = useMemo(
+		() =>
+			getFieldColumns({
+				onEdit: startEditingField,
+				onDelete: handleDeleteField,
+				isLoading,
+				isEditing: editingField !== null,
+			}),
+		[startEditingField, handleDeleteField, isLoading, editingField],
+	);
 
 	if (!schema) return null;
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="max-w-5xl max-h-[90vh] p-0 flex flex-col overflow-hidden">
+			<DialogContent className="max-w-5xl max-h-[90vh] p-0 !flex !flex-col overflow-hidden">
 				<DialogHeader className="p-6 pb-0">
 					<DialogTitle>{schema.name}</DialogTitle>
 					<DialogDescription>{schema.description}</DialogDescription>
@@ -335,7 +268,7 @@ export function SchemaDetailModal({
 							<h3 className="text-sm font-medium mb-2">Fields</h3>
 							<ComponentDataTable
 								data={schema.field_schemas}
-								columns={fieldColumns}
+								columns={columns}
 								size="sm"
 								scrollable="both"
 							/>
@@ -373,35 +306,36 @@ export function SchemaDetailModal({
 										)}
 									</div>
 									<div>
-										<Label className="text-xs">Field Type</Label>
-										<Combobox
-											items={FieldTypeValue}
+										<Label
+											htmlFor={`field-type-${editingField.id}`}
+											className="text-xs"
+										>
+											Field Type
+										</Label>
+										<Select
 											value={editingField.type}
 											onValueChange={(value) =>
 												setEditingField((prev) =>
 													prev ? { ...prev, type: value as FieldType } : null,
 												)
 											}
+											disabled={isEditingFieldLoading}
 										>
-											<ComboboxInput
-												placeholder="Select type"
-												className="text-xs"
-												disabled={isEditingFieldLoading}
-											/>
-											<ComboboxContent side="top">
-												<ComboboxList>
-													{(item: FieldType) => (
-														<ComboboxItem
-															key={item}
-															value={item}
-															className="text-xs"
-														>
-															{item}
-														</ComboboxItem>
-													)}
-												</ComboboxList>
-											</ComboboxContent>
-										</Combobox>
+											<SelectTrigger className="text-xs">
+												<SelectValue placeholder="Select type" />
+											</SelectTrigger>
+											<SelectContent>
+												{FieldTypeValue.map((item) => (
+													<SelectItem
+														key={item}
+														value={item}
+														className="text-xs"
+													>
+														{item}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
 									</div>
 								</div>
 								<div>
@@ -481,8 +415,7 @@ export function SchemaDetailModal({
 									</div>
 									<div>
 										<Label className="text-xs">Field Type</Label>
-										<Combobox
-											items={FieldTypeValue}
+										<Select
 											value={newField.type}
 											onValueChange={(value) =>
 												setNewField((prev) => ({
@@ -490,26 +423,23 @@ export function SchemaDetailModal({
 													type: value as FieldType,
 												}))
 											}
+											disabled={isAddingFieldLoading}
 										>
-											<ComboboxInput
-												placeholder="Select type"
-												className="text-xs"
-												disabled={isAddingFieldLoading}
-											/>
-											<ComboboxContent side="top">
-												<ComboboxList>
-													{(item: FieldType) => (
-														<ComboboxItem
-															key={item}
-															value={item}
-															className="text-xs"
-														>
-															{item}
-														</ComboboxItem>
-													)}
-												</ComboboxList>
-											</ComboboxContent>
-										</Combobox>
+											<SelectTrigger className="text-xs">
+												<SelectValue placeholder="Select type" />
+											</SelectTrigger>
+											<SelectContent>
+												{FieldTypeValue.map((item) => (
+													<SelectItem
+														key={item}
+														value={item}
+														className="text-xs"
+													>
+														{item}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
 									</div>
 								</div>
 								<div>
@@ -563,38 +493,11 @@ export function SchemaDetailModal({
 						</Button>
 					)}
 
-					<AlertDialog>
-						<AlertDialogTrigger asChild>
-							<Button variant="destructive" size="sm" disabled={isLoading}>
-								<TrashIcon className="h-4 w-4 mr-1" />
-								Delete Group
-							</Button>
-						</AlertDialogTrigger>
-						<AlertDialogContent>
-							<AlertDialogHeader>
-								<AlertDialogTitle>Delete Schema Group</AlertDialogTitle>
-								<AlertDialogDescription>
-									Are you sure you want to delete the schema group &quot;
-									{schema.name}&quot;? This will also delete all{" "}
-									{schema.field_schemas.length} field(s). This action cannot be
-									undone.
-								</AlertDialogDescription>
-							</AlertDialogHeader>
-							<AlertDialogFooter>
-								<AlertDialogCancel>Cancel</AlertDialogCancel>
-								<AlertDialogAction
-									onClick={handleDeleteGroup}
-									className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-								>
-									{isDeletingGroupLoading ? (
-										<Spinner className="h-4 w-4" />
-									) : (
-										"Delete"
-									)}
-								</AlertDialogAction>
-							</AlertDialogFooter>
-						</AlertDialogContent>
-					</AlertDialog>
+					<GroupDeleteAlert
+						schema={schema}
+						onDelete={handleDeleteGroup}
+						isLoading={isDeletingGroupLoading}
+					/>
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>
