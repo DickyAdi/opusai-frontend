@@ -47,12 +47,28 @@ export const KnowledgeManagementColumns: ColumnDef<knowledgeType>[] = [
 		header: ({ column }) => (
 			<DataTableColumnHeader column={column} title="Filename" />
 		),
+		cell: ({ row }) => {
+			const value = row.getValue("name") as string;
+			return (
+				<div className="max-w-md line-clamp-2" title={value}>
+					{value}
+				</div>
+			);
+		},
 	},
 	{
 		accessorKey: "stored_name",
 		header: ({ column }) => (
 			<DataTableColumnHeader column={column} title="File ID" />
 		),
+		cell: ({ row }) => {
+			const value = row.getValue("stored_name") as string;
+			return (
+				<div className="max-w-md line-clamp-2" title={value}>
+					{value}
+				</div>
+			);
+		},
 	},
 	{
 		accessorKey: "last_modified",
