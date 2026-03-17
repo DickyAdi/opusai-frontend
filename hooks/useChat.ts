@@ -209,6 +209,12 @@ export function useChatAPI() {
 
 		const processNext = () => {
 			if (chunkQueueRef.current.length === 0) {
+				// Double-check: Did a chunk arrive between the check and now?
+				if (chunkQueueRef.current.length > 0) {
+					// Chunk arrived! Continue processing
+					requestAnimationFrame(processNext);
+					return;
+				}
 				processingRef.current = false;
 				return;
 			}

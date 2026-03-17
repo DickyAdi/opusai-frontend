@@ -4,6 +4,10 @@ import {
 	fetchSmartSearchSchema,
 	smartSearch,
 	smartSearchCreateSchema,
+	addFieldToGroupSchema,
+	deleteGroupSchema,
+	editFieldSchema,
+	deleteFieldSchema,
 } from "../api/smartsearch";
 import {
 	type SearchEngineHits,
@@ -12,6 +16,7 @@ import {
 	type SmartSearchGroupSchema,
 	type FieldType,
 	FieldTypeValue,
+	type SmartSearchFieldInputNoId,
 } from "../type/smartsearch";
 import {
 	FieldSchemaValidation,
@@ -423,5 +428,74 @@ export const smartSearchSchemaCreateStore =
 			get().deleteGroup(groupId);
 			set({ saving: false }); // no need to check if in saving state as it is already been checked in the component side
 			return result;
+		},
+	}));
+
+// Store for managing existing schemas (add fields, edit fields, delete fields, delete groups)
+interface SmartSearchSchemaManageStoreState {
+	// Loading states
+	isAddingField: boolean;
+	isDeletingGroup: boolean;
+	isEditingField: boolean;
+	isDeletingField: boolean;
+
+	// Actions
+	addFieldsToGroup: (
+		groupId: string,
+		fields: SmartSearchFieldInputNoId[],
+	) => Promise<string>;
+	deleteGroup: (groupId: string) => Promise<string>;
+	editField: (
+		fieldId: string,
+		updates: Partial<Pick<SmartSearchFieldInput, "name" | "description" | "type">>,
+	) => Promise<string>;
+	deleteField: (fieldId: string) => Promise<string>;
+}
+
+export const smartSearchSchemaManageStore =
+	create<SmartSearchSchemaManageStoreState>((set) => ({
+		isAddingField: false,
+		isDeletingGroup: false,
+		isEditingField: false,
+		isDeletingField: false,
+
+		addFieldsToGroup: async (groupId: string, fields) => {
+			set({ isAddingField: true });
+			try {
+				const result = await addFieldToGroupSchema(groupId, fields);
+				return result.message;
+			} finally {
+				set({ isAddingField: false });
+			}
+		},
+
+		deleteGroup: async (groupId: string) => {
+			set({ isDeletingGroup: true });
+			try {
+				const result = await deleteGroupSchema(groupId);
+				return result.message;
+			} finally {
+				set({ isDeletingGroup: false });
+			}
+		},
+
+		editField: async (fieldId: string, updates) => {
+			set({ isEditingField: true });
+			try {
+				const result = await editFieldSchema(fieldId, updates);
+				return "Field updated successfully";
+			} finally {
+				set({ isEditingField: false });
+			}
+		},
+
+		deleteField: async (fieldId: string) => {
+			set({ isDeletingField: true });
+			try {
+				const result = await deleteFieldSchema(fieldId);
+				return result.message;
+			} finally {
+				set({ isDeletingField: false });
+			}
 		},
 	}));
